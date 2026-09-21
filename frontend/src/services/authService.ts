@@ -1,10 +1,11 @@
-import type { AuthSession, LoginPayload, LoginResponse, RegisterPayload } from '@/types'
+import type { AuthService, LoginResponse } from '@/types'
 import { api } from './api'
 import { AuthError, toAuthError } from './errors'
+import { mockAuthService } from './mockAuthService'
 
 /** All authentication HTTP calls live here so UI components never touch Axios. */
-export const authService = {
-  async login(payload: LoginPayload): Promise<AuthSession> {
+const httpAuthService: AuthService = {
+  async login(payload) {
     try {
       const { data } = await api.post<LoginResponse>('/auth/login', {
         email: payload.email.trim().toLowerCase(),
@@ -20,7 +21,7 @@ export const authService = {
     }
   },
 
-  async register(payload: RegisterPayload): Promise<void> {
+  async register(payload) {
     try {
       const farmName = payload.farmName?.trim()
       await api.post('/auth/register', {
@@ -34,3 +35,11 @@ export const authService = {
     }
   },
 }
+
+/**
+ * Demo mode lets the login flow run without a backend. It is honoured only in
+ * the dev server (`import.meta.env.DEV`), so a production build always uses the real API.
+ */
+export const isMockAuthEnabled = import.meta.env.DEV && import.meta.env.VITE_USE_MOCK_AUTH === 'true'
+
+export const authService: AuthService = isMockAuthEnabled ? mockAuthService : httpAuthService
