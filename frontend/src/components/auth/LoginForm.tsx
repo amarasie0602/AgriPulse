@@ -7,10 +7,13 @@ import { Checkbox } from '@/components/ui/Checkbox'
 import { Divider } from '@/components/ui/Divider'
 import { GoogleIcon } from '@/components/ui/GoogleIcon'
 import { TextField } from '@/components/ui/TextField'
+import { isMockAuthEnabled } from '@/services/authService'
+import { DEMO_CREDENTIALS } from '@/services/mockAuthService'
 import { useAuth } from '@/hooks/useAuth'
 import { useForm, type Validators } from '@/hooks/useForm'
 import type { AuthLocationState } from '@/types'
 import { validateEmail, validatePassword } from '@/utils/validators'
+import { DemoModeNotice } from './DemoModeNotice'
 import { PasswordInput } from './PasswordInput'
 
 interface LoginValues extends Record<string, string> {
@@ -30,7 +33,7 @@ export function LoginForm() {
   const state = (location.state ?? {}) as AuthLocationState
 
   const formRef = useRef<HTMLFormElement>(null)
-  const { validate, getFieldProps, values } = useForm<LoginValues>(
+  const { validate, getFieldProps, setValue, values } = useForm<LoginValues>(
     { email: state.email ?? '', password: '' },
     validators,
   )
@@ -63,6 +66,14 @@ export function LoginForm() {
         <p className="mt-1.5 text-[0.95rem] text-ink-soft">Sign in to your AgriPulse account</p>
       </div>
 
+      {isMockAuthEnabled && (
+        <DemoModeNotice
+          onUseDemo={() => {
+            setValue('email', DEMO_CREDENTIALS.email)
+            setValue('password', DEMO_CREDENTIALS.password)
+          }}
+        />
+      )}
       {state.registered && (
         <Alert tone="success" className="mb-5">
           Account created. Sign in to continue.
