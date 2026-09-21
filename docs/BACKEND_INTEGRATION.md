@@ -64,7 +64,17 @@ app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: t
 
 `forbidNonWhitelisted` rejects unknown fields with `400`, so the DTO below **must** declare `farmName` or registrations that include it will fail.
 
-### 2. Prisma schema
+### 2. Database: local PostgreSQL only
+
+This project uses a PostgreSQL server installed on your own machine. No online or hosted database service (Supabase, Neon, Railway, RDS and similar) is required or used. In the backend `.env`:
+
+```
+DATABASE_URL="postgresql://<user>:<password>@localhost:5432/agripulse?schema=public"
+```
+
+Create the database locally first (`createdb agripulse`, or pgAdmin), then run the Prisma migration below. The frontend never talks to the database; it only calls the NestJS API.
+
+### 3. Prisma schema
 
 ```prisma
 enum Role {
@@ -86,7 +96,7 @@ model User {
 
 Then run `npx prisma migrate dev --name add_user_auth`.
 
-### 3. DTOs
+### 4. DTOs
 
 ```ts
 export class RegisterDto {
@@ -102,7 +112,7 @@ export class LoginDto {
 }
 ```
 
-### 4. Auth service
+### 5. Auth service
 
 ```ts
 async register(dto: RegisterDto) {
@@ -132,7 +142,7 @@ async login(dto: LoginDto) {
 
 Never return `passwordHash` in a response.
 
-### 5. JWT configuration
+### 6. JWT configuration
 
 ```ts
 JwtModule.registerAsync({
@@ -146,7 +156,7 @@ JwtModule.registerAsync({
 
 Keep `JWT_SECRET` and `DATABASE_URL` in the backend `.env` only.
 
-### 6. Recommended extras
+### 7. Recommended extras
 
 - Throttle `/auth/login` and `/auth/register` (`@nestjs/throttler`) — the frontend already handles `429`.
 - Add a `JwtAuthGuard` (`passport-jwt`) and a `RolesGuard` with a `@Roles()` decorator for future role-based endpoints.
