@@ -4,6 +4,7 @@ import { CircleCheck, Mail, Sprout, User } from 'lucide-react'
 import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
 import { TextField } from '@/components/ui/TextField'
+import { isMockAuthEnabled } from '@/services/authService'
 import { useAuth } from '@/hooks/useAuth'
 import { useForm, type Validators } from '@/hooks/useForm'
 import type { AuthLocationState } from '@/types'
@@ -14,6 +15,7 @@ import {
   validateName,
   validatePassword,
 } from '@/utils/validators'
+import { DemoModeNotice } from './DemoModeNotice'
 import { PasswordInput } from './PasswordInput'
 import { PasswordStrength } from './PasswordStrength'
 
@@ -87,6 +89,8 @@ export function RegisterForm() {
         </h1>
         <p className="mt-1.5 text-[0.95rem] text-ink-soft">Start understanding your farm's sustainability</p>
       </div>
+
+      {isMockAuthEnabled && <DemoModeNotice />}
 
       <form ref={formRef} onSubmit={handleSubmit} noValidate className="space-y-5">
         <TextField
