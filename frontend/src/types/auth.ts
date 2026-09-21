@@ -32,3 +32,9 @@ export interface AuthSession {
   token: string
   user: AuthUser
 }
+
+/** Contract shared by the real HTTP service and the offline demo service. */
+export interface AuthService {
+  login(payload: LoginPayload): Promise<AuthSession>
+  register(payload: RegisterPayload): Promise<void>
+}
