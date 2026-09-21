@@ -28,9 +28,21 @@ Other scripts:
 
 ### Environment variables
 
-| Variable       | Example                 | Purpose                                       |
-| -------------- | ----------------------- | --------------------------------------------- |
-| `VITE_API_URL` | `http://localhost:3000` | Base URL of the NestJS API (no trailing `/`). |
+| Variable             | Example                 | Purpose                                                             |
+| -------------------- | ----------------------- | ------------------------------------------------------------------- |
+| `VITE_API_URL`       | `http://localhost:3000` | Base URL of the NestJS API (no trailing `/`).                       |
+| `VITE_USE_MOCK_AUTH` | `true` / `false`        | Demo mode: sign in without a backend (dev server only, see below).  |
+
+### Demo mode (no backend needed)
+
+While the NestJS API isn't ready, set `VITE_USE_MOCK_AUTH=true` in `.env` and restart `npm run dev`. Login and registration then run against an offline stand-in (`src/services/mockAuthService.ts`):
+
+- Sign in with `demo@agripulse.dev` / `password123`, or register your own account.
+- Accounts (with hashed passwords) live only in your browser's localStorage and are never sent anywhere.
+- It returns the same errors and messages as the real API (401, 409), so the UI behaves identically.
+- It works only on the dev server. A production build ignores the flag and always calls the real API.
+
+Set `VITE_USE_MOCK_AUTH=false` (the default in `.env.example`) once the backend is running.
 
 Vite exposes only variables prefixed with `VITE_` to the browser, and everything in a frontend bundle is public. Never put secrets (JWT secret, database URL) in this file.
 
