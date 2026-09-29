@@ -61,12 +61,12 @@ export function LoginForm() {
   }
 
   return (
-    <div className="rounded-[2rem] border border-white/12 bg-forest-900/55 p-7 shadow-glass backdrop-blur-2xl sm:p-8">
-      <div className="mb-6">
-        <h1 className="font-display text-[1.75rem] leading-tight font-medium tracking-tight text-bone-50">
+    <div className="rounded-[2rem] border border-white/12 bg-forest-900/55 p-5 shadow-glass backdrop-blur-2xl sm:p-6">
+      <div className="mb-3.5">
+        <h1 className="font-display text-[1.6rem] leading-tight font-medium tracking-tight text-bone-50">
           Welcome back
         </h1>
-        <p className="mt-1.5 text-[0.9rem] text-moss-200/85">Sign in to your AgriPulse account</p>
+        <p className="mt-1 text-[0.9rem] text-moss-200/85">Sign in to your AgriPulse account</p>
       </div>
 
       {isMockAuthEnabled && (
@@ -89,7 +89,7 @@ export function LoginForm() {
         </Alert>
       )}
 
-      <form ref={formRef} onSubmit={handleSubmit} noValidate className="space-y-4">
+      <form ref={formRef} onSubmit={handleSubmit} noValidate className="space-y-3">
         <TextField
           {...getFieldProps('email')}
           label="Email"
@@ -152,7 +152,7 @@ export function LoginForm() {
         </Button>
       </form>
 
-      <div className="my-5">
+      <div className="my-3.5">
         <Divider label="OR" tone="dark" />
       </div>
 
@@ -164,7 +164,7 @@ export function LoginForm() {
         onError={(message) => setSubmitError(message)}
       />
 
-      <p className="mt-6 text-center text-sm text-moss-200/85">
+      <p className="mt-3.5 text-center text-sm text-moss-200/85">
         Don't have an account?{' '}
         <Link
           to="/register"
