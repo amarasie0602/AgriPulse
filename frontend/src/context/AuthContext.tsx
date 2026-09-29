@@ -31,6 +31,8 @@ export interface AuthContextValue {
   loading: boolean
   login: (payload: LoginPayload, options?: LoginOptions) => Promise<AuthUser>
   register: (payload: RegisterPayload) => Promise<void>
+  /** `credential` is the ID token Google Identity Services hands back on success. */
+  loginWithGoogle: (credential: string, options?: LoginOptions) => Promise<AuthUser>
   logout: () => void
   /** Foundation for role-based access: `hasRole('ADMIN', 'ANALYST')`. */
   hasRole: (...roles: UserRole[]) => boolean
@@ -81,16 +83,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.clearTimeout(timer)
   }, [session, endSession])
 
-  const login = useCallback<AuthContextValue['login']>(async (payload, options) => {
-    const next = await authService.login(payload)
-    tokenStorage.save(next, options?.remember ?? false)
+  const applySession = useCallback((next: AuthSession, remember: boolean): AuthUser => {
+    tokenStorage.save(next, remember)
     setSession(next)
     return next.user
   }, [])
 
+  const login = useCallback<AuthContextValue['login']>(
+    async (payload, options) => applySession(await authService.login(payload), options?.remember ?? false),
+    [applySession],
+  )
+
   const register = useCallback<AuthContextValue['register']>(
     (payload) => authService.register(payload),
     [],
+  )
+
+  const loginWithGoogle = useCallback<AuthContextValue['loginWithGoogle']>(
+    async (credential, options) =>
+      applySession(await authService.loginWithGoogle(credential), options?.remember ?? false),
+    [applySession],
   )
 
   const logout = useCallback(() => endSession(), [endSession])
@@ -103,10 +115,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       login,
       register,
+      loginWithGoogle,
       logout,
       hasRole: (...roles) => (session ? roles.includes(session.user.role) : false),
     }),
-    [session, loading, login, register, logout],
+    [session, loading, login, register, loginWithGoogle, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
