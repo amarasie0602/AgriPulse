@@ -61,12 +61,15 @@ Vite exposes only variables prefixed with `VITE_` to the browser, and everything
 
 ## Routes
 
-| Path         | Access       | Notes                                                       |
-| ------------ | ------------ | ----------------------------------------------------------- |
-| `/login`     | Public only  | Signed-in users are redirected to `/dashboard`.             |
-| `/register`  | Public only  | On success, goes to `/login` with a confirmation banner.    |
-| `/dashboard` | Protected    | Placeholder. Unauthenticated users are sent to `/login`.    |
-| `/`, `*`     | —            | Redirect to `/dashboard`.                                   |
+| Path         | Access       | Notes                                                            |
+| ------------ | ------------ | ------------------------------------------------------------------- |
+| `/login`     | Public only  | Signed-in users are redirected to `/dashboard`.                     |
+| `/register`  | Public only  | On success, goes to `/login` with a confirmation banner.            |
+| `/dashboard` | Protected    | Overview: farm summary, profile-completion prompt, upcoming modules. |
+| `/profile`   | Protected    | Farm profile form (name, location, size, crop types).               |
+| `/`, `*`     | —            | Redirect to `/dashboard`.                                            |
+
+`/dashboard` and `/profile` share the `DashboardShell` layout (sidebar on desktop, a slide-over drawer on mobile).
 
 ## Folder structure
 
@@ -76,36 +79,39 @@ frontend/
 ├── index.html
 ├── vite.config.ts
 └── src/
-    ├── main.tsx                     Providers: Router → AuthProvider → App
+    ├── main.tsx                     Providers: Router → GoogleOAuthProvider → AuthProvider → App
     ├── App.tsx                      Route table
     ├── index.css                    Tailwind import + design tokens + animations
     ├── components/
     │   ├── auth/
-    │   │   ├── LoginForm.tsx
+    │   │   ├── LoginForm.tsx        Sign-in panel (Smart Field Console)
     │   │   ├── RegisterForm.tsx
     │   │   ├── GoogleSignInButton.tsx  Real button when configured, disabled fallback otherwise
     │   │   ├── PasswordInput.tsx    Show/hide toggle
     │   │   └── PasswordStrength.tsx
     │   ├── layout/
-    │   │   ├── AuthLayout.tsx       Split-screen shell
-    │   │   ├── BrandPanel.tsx       Desktop brand side
-    │   │   ├── MobileBrandHeader.tsx
-    │   │   ├── FieldVisualization.tsx  Abstract precision-agriculture SVG
-    │   │   ├── FloatingStatCard.tsx    Glass cards (sample data)
-    │   │   ├── ContourLines.tsx
-    │   │   └── AppShell.tsx         Signed-in frame (header + sign out)
-    │   └── ui/                      Button, TextField, Checkbox, Alert, Divider, Logo, …
-    ├── pages/                       Login, Register, Dashboard (placeholder)
+    │   │   ├── ConsoleAuthShell.tsx     Dark shell shared by Login/Register
+    │   │   ├── SmartFieldConsoleFrame.tsx  Ring + orbiting sample-data cards around Login
+    │   │   ├── SmartFieldConsole.tsx / OrbitMetricCard.tsx / AerialFieldBackdrop.tsx / ContourLines.tsx
+    │   │   ├── DashboardShell.tsx   Signed-in frame: sidebar (desktop) / drawer (mobile) + outlet
+    │   │   └── SidebarNav.tsx       Nav links + "Coming soon" section, shared by both
+    │   └── ui/                      Button, TextField, Checkbox, ChipInput, Alert, Divider, Logo, …
+    │                                 (TextField/Checkbox/Alert/Divider/Button take a light/dark `tone`)
+    ├── pages/
+    │   ├── Login.tsx / Register.tsx
+    │   ├── Dashboard.tsx            Overview
+    │   └── FarmProfile.tsx          Edit farm name, location, size, crop types
     ├── context/AuthContext.tsx      user, token, login, register, loginWithGoogle, logout, isAuthenticated, loading, hasRole
-    ├── hooks/                       useAuth, useForm, useDocumentTitle, useElementWidth
+    ├── hooks/                       useAuth, useProfile, useForm, useDocumentTitle, useElementWidth
     ├── routes/                      ProtectedRoute, PublicOnlyRoute
     ├── config/google.ts             isGoogleAuthEnabled, googleClientId (from VITE_GOOGLE_CLIENT_ID)
     ├── services/
     │   ├── api.ts                   Axios instance + interceptors
     │   ├── authService.ts           /auth/login, /auth/register, /auth/google
+    │   ├── profileService.ts        GET/PATCH /users/me (real + offline demo)
     │   ├── errors.ts                HTTP status → friendly message
     │   └── tokenStorage.ts          Session persistence
-    ├── types/                       Auth and navigation types
+    ├── types/                       Auth, navigation and farm profile types
     └── utils/                       validators, jwt (decode + expiry), cn
 ```
 
