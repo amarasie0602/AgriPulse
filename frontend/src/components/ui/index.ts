@@ -1,6 +1,7 @@
 export { Alert } from './Alert'
 export { Button } from './Button'
 export { Checkbox } from './Checkbox'
+export { ChipInput } from './ChipInput'
 export { Divider } from './Divider'
 export { FullScreenLoader } from './FullScreenLoader'
 export { GoogleIcon } from './GoogleIcon'
