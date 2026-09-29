@@ -1,15 +1,11 @@
-import { BarChart3, CircleAlert, Droplets, MapPin, Sprout } from 'lucide-react'
+import { ArrowRight, BarChart3, CircleAlert, Droplets, MapPin, Sprout } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
-import { useAuth, useDocumentTitle, useProfile } from '@/hooks'
+import { useAuth, useDocumentTitle, useProfile, useResourceEntries } from '@/hooks'
+import { RESOURCE_TYPE_LABELS } from '@/types'
 
 const UPCOMING_MODULES = [
-  {
-    icon: Droplets,
-    title: 'Resource Tracking',
-    description: 'Log and visualize water, energy, and input usage over time.',
-  },
   {
     icon: Sprout,
     title: 'Carbon Calculator',
@@ -25,11 +21,13 @@ const UPCOMING_MODULES = [
 export default function Dashboard() {
   const { user } = useAuth()
   const { profile, loading, error } = useProfile()
+  const { summary, loading: resourcesLoading } = useResourceEntries()
   const navigate = useNavigate()
   useDocumentTitle('Dashboard')
 
   const firstName = user?.name?.trim().split(' ')[0] || 'there'
   const profileIncomplete = !loading && profile && (!profile.farmName || !profile.location || !profile.farmSizeHectares)
+  const summaryEntries = Object.entries(summary) as [keyof typeof RESOURCE_TYPE_LABELS, number][]
 
   return (
     <div className="animate-slide-up space-y-8">
@@ -92,8 +90,39 @@ export default function Dashboard() {
       )}
 
       <div>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold tracking-[0.08em] text-ink-soft uppercase">Resource usage</h2>
+          <Link
+            to="/resources"
+            className="flex items-center gap-1 text-sm font-semibold text-forest-700 underline-offset-4 hover:text-forest-900 hover:underline"
+          >
+            {summaryEntries.length > 0 ? 'View log' : 'Add an entry'}
+            <ArrowRight className="size-3.5" aria-hidden="true" />
+          </Link>
+        </div>
+
+        {resourcesLoading ? (
+          <p className="text-ink-soft">Loading…</p>
+        ) : summaryEntries.length === 0 ? (
+          <div className="flex items-center gap-3 rounded-2xl border border-dashed border-bone-300 p-5">
+            <Droplets className="size-5 shrink-0 text-forest-700" aria-hidden="true" />
+            <p className="text-ink-soft">No usage logged yet — start tracking water, energy, or other inputs.</p>
+          </div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-3">
+            {summaryEntries.map(([type, total]) => (
+              <div key={type} className="rounded-2xl border border-bone-300/70 bg-bone-50/70 p-4">
+                <p className="text-sm font-semibold text-ink-soft">{RESOURCE_TYPE_LABELS[type]}</p>
+                <p className="mt-1 font-display text-xl font-medium text-forest-900">{total} total</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
         <h2 className="mb-3 text-sm font-semibold tracking-[0.08em] text-ink-soft uppercase">Coming to your workspace</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2">
           {UPCOMING_MODULES.map(({ icon: Icon, title, description }) => (
             <div
               key={title}
