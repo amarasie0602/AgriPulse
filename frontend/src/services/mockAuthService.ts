@@ -1,6 +1,16 @@
-import type { AuthService, AuthSession, AuthUser, LoginPayload, RegisterPayload } from '@/types'
+import type {
+  AuthService,
+  AuthSession,
+  AuthUser,
+  FarmProfile,
+  LoginPayload,
+  ProfileService,
+  RegisterPayload,
+  UpdateProfileInput,
+} from '@/types'
 import { decodeJwtPayload } from '@/utils/jwt'
 import { AuthError } from './errors'
+import { tokenStorage } from './tokenStorage'
 
 /**
  * Offline stand-in for the Express auth endpoints, used only in development
@@ -19,6 +29,10 @@ interface StoredUser extends AuthUser {
   /** Absent for accounts created via the (mock) Google sign-in below. */
   passwordHash?: string
   farmName?: string
+  location?: string
+  farmSizeHectares?: number
+  cropTypes?: string[]
+  createdAt?: string
 }
 
 /** Fields this mock reads out of the ID token Google Identity Services returns. Not verified. */
@@ -65,7 +79,11 @@ async function seedDemoUser(): Promise<StoredUser[]> {
     email: DEMO_CREDENTIALS.email,
     role: 'FARMER',
     farmName: 'Demo Farm',
+    location: 'Kandy, Sri Lanka',
+    farmSizeHectares: 8.5,
+    cropTypes: ['Rice', 'Tea'],
     passwordHash: await hash(DEMO_CREDENTIALS.password),
+    createdAt: new Date().toISOString(),
   })
   writeUsers(users)
   return users
@@ -110,6 +128,7 @@ export const mockAuthService: AuthService = {
       role: 'FARMER',
       farmName: farmName?.trim() || undefined,
       passwordHash: await hash(password),
+      createdAt: new Date().toISOString(),
     })
     writeUsers(users)
   },
@@ -137,12 +156,66 @@ export const mockAuthService: AuthService = {
     let found = users.find((user) => user.email === email)
 
     if (!found) {
-      found = { id: nextId(users), name: payload.name?.trim() || email.split('@')[0], email, role: 'FARMER' }
+      found = {
+        id: nextId(users),
+        name: payload.name?.trim() || email.split('@')[0],
+        email,
+        role: 'FARMER',
+        createdAt: new Date().toISOString(),
+      }
       users.push(found)
       writeUsers(users)
     }
 
     const user: AuthUser = { id: found.id, name: found.name, email: found.email, role: found.role }
     return { token: createToken(user), user }
+  },
+}
+
+function toFarmProfile(user: StoredUser): FarmProfile {
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    farmName: user.farmName,
+    location: user.location,
+    farmSizeHectares: user.farmSizeHectares,
+    cropTypes: user.cropTypes ?? [],
+    authProvider: user.passwordHash ? 'local' : 'google',
+    createdAt: user.createdAt ?? new Date().toISOString(),
+  }
+}
+
+/** Same tokenless-checks-aside pattern as mockAuthService: no backend, storage only. */
+export const mockProfileService: ProfileService = {
+  async getProfile(): Promise<FarmProfile> {
+    await wait()
+    const session = tokenStorage.load()
+    if (!session) throw new AuthError('Your session has expired. Please sign in again.', 401)
+
+    const users = readUsers()
+    const found = users.find((user) => user.id === session.user.id)
+    if (!found) throw new AuthError('Your account could not be found. Please sign in again.', 404)
+
+    return toFarmProfile(found)
+  },
+
+  async updateProfile(input: UpdateProfileInput): Promise<FarmProfile> {
+    await wait()
+    const session = tokenStorage.load()
+    if (!session) throw new AuthError('Your session has expired. Please sign in again.', 401)
+
+    const users = readUsers()
+    const found = users.find((user) => user.id === session.user.id)
+    if (!found) throw new AuthError('Your account could not be found. Please sign in again.', 404)
+
+    if (input.farmName !== undefined) found.farmName = input.farmName
+    if (input.location !== undefined) found.location = input.location
+    if (input.farmSizeHectares !== undefined) found.farmSizeHectares = input.farmSizeHectares
+    if (input.cropTypes !== undefined) found.cropTypes = input.cropTypes
+
+    writeUsers(users)
+    return toFarmProfile(found)
   },
 }
