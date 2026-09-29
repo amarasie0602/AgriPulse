@@ -1,8 +1,9 @@
 import type { AuthService, AuthSession, AuthUser, LoginPayload, RegisterPayload } from '@/types'
+import { decodeJwtPayload } from '@/utils/jwt'
 import { AuthError } from './errors'
 
 /**
- * Offline stand-in for the NestJS auth endpoints, used only in development
+ * Offline stand-in for the Express auth endpoints, used only in development
  * (see VITE_USE_MOCK_AUTH). Accounts live in this browser's localStorage and
  * are never sent anywhere. It mirrors the real API's behaviour and messages
  * so the UI flow is identical.
@@ -15,8 +16,17 @@ const TOKEN_LIFETIME_S = 60 * 60 * 24
 export const DEMO_CREDENTIALS = { email: 'demo@agripulse.dev', password: 'password123' } as const
 
 interface StoredUser extends AuthUser {
-  passwordHash: string
+  /** Absent for accounts created via the (mock) Google sign-in below. */
+  passwordHash?: string
   farmName?: string
+}
+
+/** Fields this mock reads out of the ID token Google Identity Services returns. Not verified. */
+interface GoogleCredentialPayload {
+  email?: string
+  email_verified?: boolean
+  name?: string
+  sub?: string
 }
 
 const wait = () => new Promise((resolve) => setTimeout(resolve, LATENCY_MS))
@@ -38,6 +48,10 @@ function readUsers(): StoredUser[] {
 
 function writeUsers(users: StoredUser[]): void {
   localStorage.setItem(USERS_KEY, JSON.stringify(users))
+}
+
+function nextId(users: StoredUser[]): number {
+  return Math.max(0, ...users.map((user) => Number(user.id))) + 1
 }
 
 /** Ensures the demo account exists so there is always something to sign in with. */
@@ -72,7 +86,7 @@ export const mockAuthService: AuthService = {
     const users = await seedDemoUser()
     const found = users.find((user) => user.email === email.trim().toLowerCase())
 
-    if (!found || found.passwordHash !== (await hash(password))) {
+    if (!found?.passwordHash || found.passwordHash !== (await hash(password))) {
       throw new AuthError('Incorrect email or password.', 401)
     }
 
@@ -90,7 +104,7 @@ export const mockAuthService: AuthService = {
     }
 
     users.push({
-      id: Math.max(0, ...users.map((user) => Number(user.id))) + 1,
+      id: nextId(users),
       name: name.trim(),
       email: normalized,
       role: 'FARMER',
@@ -98,5 +112,37 @@ export const mockAuthService: AuthService = {
       passwordHash: await hash(password),
     })
     writeUsers(users)
+  },
+
+  /**
+   * Reads the Google ID token's payload directly in the browser (no
+   * signature check — there's no backend here to verify it against Google).
+   * This is fine for a local demo: nothing more sensitive than a placeholder
+   * dashboard is guarded by it, and real deployments always go through
+   * authService's HTTP path, which verifies the token server-side.
+   */
+  async loginWithGoogle(credential: string): Promise<AuthSession> {
+    await wait()
+    const payload = decodeJwtPayload<GoogleCredentialPayload>(credential)
+
+    if (!payload?.email) {
+      throw new AuthError('Google sign-in failed. Please try again.', 401)
+    }
+    if (!payload.email_verified) {
+      throw new AuthError('Please verify your email with Google before continuing.', 403)
+    }
+
+    const email = payload.email.toLowerCase()
+    const users = await seedDemoUser()
+    let found = users.find((user) => user.email === email)
+
+    if (!found) {
+      found = { id: nextId(users), name: payload.name?.trim() || email.split('@')[0], email, role: 'FARMER' }
+      users.push(found)
+      writeUsers(users)
+    }
+
+    const user: AuthUser = { id: found.id, name: found.name, email: found.email, role: found.role }
+    return { token: createToken(user), user }
   },
 }
