@@ -11,7 +11,7 @@ export class AuthError extends Error {
   }
 }
 
-type AuthAction = 'login' | 'register' | 'google'
+type AuthAction = 'login' | 'register' | 'google' | 'profile'
 
 export const NETWORK_ERROR_MESSAGE = 'Unable to connect to AgriPulse. Please try again.'
 
@@ -38,6 +38,11 @@ export function toAuthError(error: unknown, action: AuthAction): AuthError {
           : action === 'google'
             ? 'Google sign-in failed. Please try again.'
             : 'Your session has expired. Please sign in again.',
+        status,
+      )
+    case 404:
+      return new AuthError(
+        action === 'profile' ? 'Your account could not be found. Please sign in again.' : 'Not found.',
         status,
       )
     case 403:
