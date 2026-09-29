@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { CircleCheck, Mail, Sprout, User } from 'lucide-react'
+import { ArrowRight, CircleCheck, Mail, Sprout, User } from 'lucide-react'
 import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
 import { Divider } from '@/components/ui/Divider'
@@ -91,20 +91,21 @@ export function RegisterForm() {
   }
 
   return (
-    <div className="rounded-3xl border border-bone-300/70 bg-bone-50/80 p-7 shadow-card backdrop-blur-sm sm:p-9">
-      <div className="mb-7">
-        <h1 className="font-display text-[2rem] leading-tight font-medium tracking-tight text-forest-900">
+    <div className="w-full max-w-[26rem] rounded-[2rem] border border-white/12 bg-forest-900/55 p-7 shadow-glass backdrop-blur-2xl sm:p-8">
+      <div className="mb-6">
+        <h1 className="font-display text-[1.75rem] leading-tight font-medium tracking-tight text-bone-50">
           Create your account
         </h1>
-        <p className="mt-1.5 text-[0.95rem] text-ink-soft">Start understanding your farm's sustainability</p>
+        <p className="mt-1.5 text-[0.9rem] text-moss-200/85">Start understanding your farm's sustainability</p>
       </div>
 
-      {isMockAuthEnabled && <DemoModeNotice />}
+      {isMockAuthEnabled && <DemoModeNotice surface="dark" />}
 
-      <form ref={formRef} onSubmit={handleSubmit} noValidate className="space-y-5">
+      <form ref={formRef} onSubmit={handleSubmit} noValidate className="space-y-4">
         <TextField
           {...getFieldProps('name')}
           label="Full Name"
+          tone="dark"
           autoComplete="name"
           placeholder="Jane Perera"
           leftIcon={User}
@@ -114,6 +115,7 @@ export function RegisterForm() {
         <TextField
           {...getFieldProps('email')}
           label="Email"
+          tone="dark"
           type="email"
           inputMode="email"
           autoComplete="email"
@@ -124,6 +126,7 @@ export function RegisterForm() {
 
         <PasswordInput
           {...getFieldProps('password')}
+          tone="dark"
           autoComplete="new-password"
           placeholder="At least 8 characters"
           disabled={locked}
@@ -133,6 +136,7 @@ export function RegisterForm() {
         <PasswordInput
           {...getFieldProps('confirmPassword')}
           label="Confirm Password"
+          tone="dark"
           autoComplete="new-password"
           placeholder="Re-enter your password"
           disabled={locked}
@@ -141,6 +145,7 @@ export function RegisterForm() {
         <TextField
           {...getFieldProps('farmName')}
           label="Farm Name"
+          tone="dark"
           optional
           autoComplete="organization"
           placeholder="Green Valley Farm"
@@ -148,39 +153,51 @@ export function RegisterForm() {
           disabled={locked}
         />
 
-        {submitError && <Alert tone="error">{submitError}</Alert>}
+        {submitError && (
+          <Alert tone="error" surface="dark">
+            {submitError}
+          </Alert>
+        )}
 
         {succeeded ? (
           <div
             role="status"
-            className="flex h-12 animate-fade-in items-center justify-center gap-2.5 rounded-xl bg-forest-700 text-[0.95rem] font-semibold text-bone-50"
+            className="flex h-12 animate-fade-in items-center justify-center gap-2.5 rounded-xl bg-moss-400/20 text-[0.95rem] font-semibold text-moss-200"
           >
             <CircleCheck className="size-5" aria-hidden="true" />
             Account created
           </div>
         ) : (
-          <Button type="submit" fullWidth loading={submitting} loadingText="Creating account…">
+          <Button
+            type="submit"
+            variant="gold"
+            fullWidth
+            loading={submitting}
+            loadingText="Creating account…"
+            leftIcon={!submitting ? <ArrowRight className="size-4.5" aria-hidden="true" /> : undefined}
+          >
             Create Account
           </Button>
         )}
       </form>
 
-      <div className="my-6">
-        <Divider label="OR" />
+      <div className="my-5">
+        <Divider label="OR" tone="dark" />
       </div>
 
       <GoogleSignInButton
         intent="signup"
+        tone="dark"
         disabled={locked}
         onSuccess={handleGoogleSuccess}
         onError={(message) => setSubmitError(message)}
       />
 
-      <p className="mt-7 text-center text-sm text-ink-soft">
+      <p className="mt-6 text-center text-sm text-moss-200/85">
         Already have an account?{' '}
         <Link
           to="/login"
-          className="rounded font-semibold text-forest-700 underline-offset-4 hover:text-forest-900 hover:underline"
+          className="rounded font-semibold text-wheat-300 underline-offset-4 hover:text-wheat-200 hover:underline"
         >
           Sign in
         </Link>
