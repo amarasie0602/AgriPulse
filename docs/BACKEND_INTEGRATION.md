@@ -68,6 +68,37 @@ Enabling it requires **the same Client ID on both sides**: `GOOGLE_CLIENT_ID` in
 
 Protected (`Authorization: Bearer <token>`). Returns the current user, in the same shape as `login`'s `user`. Not yet called by the frontend; available for a future "validate stored session" check.
 
+### `GET /users/me` / `PATCH /users/me`
+
+Protected. This is the farm profile shown on the dashboard — a separate resource from the auth identity above, so `/auth/*` stays focused on authentication.
+
+`GET /users/me` returns:
+
+```json
+{
+  "id": "65f...",
+  "name": "Jane Perera",
+  "email": "jane@example.com",
+  "role": "FARMER",
+  "farmName": "Green Valley Farm",
+  "location": "Kandy, Sri Lanka",
+  "farmSizeHectares": 12.5,
+  "cropTypes": ["Rice", "Tea"],
+  "authProvider": "local",
+  "createdAt": "2026-09-29T05:15:38.859Z"
+}
+```
+
+`farmName`, `location`, `farmSizeHectares` are omitted (not `null`) until set; `cropTypes` is always an array. `authProvider` is `"local"`, `"google"`, or `"both"`, computed from whether the account has a password and/or a linked Google ID — used only to display "Signed in with…", not for access control.
+
+`PATCH /users/me` accepts any subset of `{ farmName, location, farmSizeHectares, cropTypes }` (a partial update — omitted fields are left unchanged) and returns the updated profile in the same shape. `farmSizeHectares` must be a JSON number, not a string.
+
+| Status | Meaning              | Message shown to the user                              |
+| ------ | ---------------------- | -------------------------------------------------------- |
+| 400    | Validation failed      | "Please check the details you entered and try again."    |
+| 401    | Missing/expired token  | "Your session has expired. Please sign in again."         |
+| 404    | Account no longer exists | "Your account could not be found. Please sign in again." |
+
 ## How the frontend talks to the backend
 
 1. Axios is created once in `frontend/src/services/api.ts` with `baseURL = import.meta.env.VITE_API_URL`.
