@@ -4,6 +4,7 @@ import { GoogleIcon } from '@/components/ui/GoogleIcon'
 import { isGoogleAuthEnabled } from '@/config/google'
 import { useAuth } from '@/hooks/useAuth'
 import { useElementWidth } from '@/hooks/useElementWidth'
+import { cn } from '@/utils/cn'
 
 interface GoogleSignInButtonProps {
   /** Called once the app's own session is established. */
@@ -12,6 +13,8 @@ interface GoogleSignInButtonProps {
   /** Whether Google's own account picker asks to sign in or to create an account. */
   intent?: 'signin' | 'signup'
   disabled?: boolean
+  /** `dark` is for glass panels over a dark background (e.g. the login console). */
+  tone?: 'light' | 'dark'
 }
 
 const GOOGLE_BUTTON_MIN_WIDTH = 200
@@ -22,14 +25,21 @@ const GOOGLE_BUTTON_MAX_WIDTH = 400
  * otherwise a disabled placeholder that explains what's missing, so the UI never claims a
  * capability that isn't actually wired up.
  */
-export function GoogleSignInButton({ onSuccess, onError, intent = 'signin', disabled }: GoogleSignInButtonProps) {
+export function GoogleSignInButton({
+  onSuccess,
+  onError,
+  intent = 'signin',
+  disabled,
+  tone = 'light',
+}: GoogleSignInButtonProps) {
   const { loginWithGoogle } = useAuth()
   const { ref, width } = useElementWidth<HTMLDivElement>()
+  const dark = tone === 'dark'
 
   if (!isGoogleAuthEnabled) {
     return (
       <Button
-        variant="secondary"
+        variant={dark ? 'outline-dark' : 'secondary'}
         fullWidth
         disabled
         leftIcon={<GoogleIcon className="size-4.5" />}
@@ -37,7 +47,12 @@ export function GoogleSignInButton({ onSuccess, onError, intent = 'signin', disa
         title="Add VITE_GOOGLE_CLIENT_ID (see .env.example) to enable Google sign-in"
       >
         Continue with Google
-        <span className="ml-2 rounded-full border border-bone-300 bg-bone-100 px-2 py-0.5 text-[0.65rem] font-semibold tracking-wide text-ink-soft uppercase">
+        <span
+          className={cn(
+            'ml-2 rounded-full border px-2 py-0.5 text-[0.65rem] font-semibold tracking-wide uppercase',
+            dark ? 'border-white/20 bg-white/10 text-bone-100/80' : 'border-bone-300 bg-bone-100 text-ink-soft',
+          )}
+        >
           Setup needed
         </span>
       </Button>
@@ -62,7 +77,7 @@ export function GoogleSignInButton({ onSuccess, onError, intent = 'signin', disa
       <GoogleLogin
         onSuccess={handleSuccess}
         onError={() => onError('Google sign-in failed. Please try again.')}
-        theme="outline"
+        theme={dark ? 'filled_black' : 'outline'}
         shape="pill"
         size="large"
         text={intent === 'signup' ? 'signup_with' : 'continue_with'}
