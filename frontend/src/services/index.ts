@@ -1,4 +1,5 @@
 export { api, setUnauthorizedHandler } from './api'
 export { authService } from './authService'
 export { AuthError } from './errors'
+export { profileService } from './profileService'
 export { tokenStorage } from './tokenStorage'
