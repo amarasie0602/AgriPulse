@@ -4,7 +4,7 @@ Express + MongoDB (Mongoose) API for the AgriPulse authentication stage. Part of
 
 ## Stack
 
-Node.js · Express · TypeScript · MongoDB · Mongoose · JWT (`jsonwebtoken`) · bcryptjs · Zod
+Node.js · Express · TypeScript · MongoDB · Mongoose · JWT (`jsonwebtoken`) · bcryptjs · Zod · Google Identity Services (`google-auth-library`)
 
 ## Getting started
 
@@ -42,12 +42,26 @@ or by installing MongoDB Community Server directly. Point `.env`'s `MONGODB_URI`
 | `JWT_EXPIRES_IN`  | `1d`                                   | Token lifetime.                                    |
 | `FRONTEND_URL`    | `http://localhost:5173`               | Origin allowed by CORS.                            |
 | `PORT`            | `3000`                                | Port the API listens on.                           |
+| `GOOGLE_CLIENT_ID` | *(optional)*                         | Enables `POST /auth/google`. See below.            |
 
 `env.ts` validates these at startup with Zod and exits with a clear message if any are missing or invalid.
 
+### Google sign-in (optional)
+
+`GOOGLE_CLIENT_ID` is the only thing standing between the "Continue with Google" button and actually working. Leave it unset and `POST /auth/google` returns `503`; the frontend then shows the button disabled with a "Setup needed" badge instead of pretending it works.
+
+To turn it on:
+
+1. Go to [console.cloud.google.com/apis/credentials](https://console.cloud.google.com/apis/credentials), create an OAuth client ID of type "Web application".
+2. Add `http://localhost:5173` (and your production origin, once you have one) under "Authorized JavaScript origins". No redirect URI is needed — Google Identity Services uses a token flow, not a redirect.
+3. Copy the client ID into **both** `backend/.env`'s `GOOGLE_CLIENT_ID` and `frontend/.env`'s `VITE_GOOGLE_CLIENT_ID` — they must be identical, since the backend checks that the token's audience matches this exact value.
+4. Restart both `npm run dev` processes.
+
+The backend never sees a Google password — only a signed ID token, which it verifies against Google's public keys before trusting any of its claims (email, name, etc.). A forged or expired token is rejected with `401` before any database lookup happens.
+
 ## API
 
-See [`../docs/BACKEND_INTEGRATION.md`](../docs/BACKEND_INTEGRATION.md) for the full request/response contract (`POST /auth/register`, `POST /auth/login`, `GET /auth/me`) and the status-to-message table the frontend relies on.
+See [`../docs/BACKEND_INTEGRATION.md`](../docs/BACKEND_INTEGRATION.md) for the full request/response contract (`POST /auth/register`, `POST /auth/login`, `POST /auth/google`, `GET /auth/me`) and the status-to-message table the frontend relies on.
 
 ## Project structure
 
@@ -59,9 +73,9 @@ backend/src/
 │   ├── env.ts               Validates and exposes environment variables
 │   └── database.ts          Mongoose connect/disconnect
 ├── modules/auth/
-│   ├── user.model.ts          Mongoose User schema
-│   ├── auth.validation.ts     Zod request schemas (register/login)
-│   ├── auth.service.ts        Hashing, JWT signing, database access
+│   ├── user.model.ts          Mongoose User schema (password optional — Google-only accounts have none)
+│   ├── auth.validation.ts     Zod request schemas (register/login/google)
+│   ├── auth.service.ts        Hashing, JWT signing, Google token verification, database access
 │   ├── auth.controller.ts     Express request handlers
 │   ├── auth.routes.ts         Route table + rate limiting
 │   └── auth.types.ts
@@ -79,6 +93,7 @@ backend/src/
 - `helmet()` sets sensible security headers; CORS is restricted to `FRONTEND_URL`.
 - Validation is `.strict()`, so a request with unexpected fields is rejected with `400` rather than silently accepted.
 - Never commit `.env`. Keep `JWT_SECRET` and `MONGODB_URI` out of source control and out of the frontend bundle.
+- Google sign-in is verified server-side against Google's public keys (`google-auth-library`'s `verifyIdToken`), and rejects tokens whose `email_verified` claim is false — an unverified email can never sign in or get linked to an existing account.
 
 ## Adding role-based access later
 
