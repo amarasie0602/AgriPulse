@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 import { authService } from './auth.service';
-import type { LoginInput, RegisterInput } from './auth.validation';
+import type { GoogleAuthInput, LoginInput, RegisterInput } from './auth.validation';
 
 export const authController = {
   async register(req: Request<unknown, unknown, RegisterInput>, res: Response, next: NextFunction): Promise<void> {
@@ -15,6 +15,15 @@ export const authController = {
   async login(req: Request<unknown, unknown, LoginInput>, res: Response, next: NextFunction): Promise<void> {
     try {
       const result = await authService.login(req.body);
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async google(req: Request<unknown, unknown, GoogleAuthInput>, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const result = await authService.loginWithGoogle(req.body);
       res.status(200).json(result);
     } catch (error) {
       next(error);
