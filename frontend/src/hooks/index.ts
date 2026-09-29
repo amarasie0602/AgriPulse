@@ -1,3 +1,4 @@
 export { useAuth } from './useAuth'
 export { useDocumentTitle } from './useDocumentTitle'
+export { useElementWidth } from './useElementWidth'
 export { useForm } from './useForm'
