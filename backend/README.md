@@ -61,7 +61,7 @@ The backend never sees a Google password — only a signed ID token, which it ve
 
 ## API
 
-See [`../docs/BACKEND_INTEGRATION.md`](../docs/BACKEND_INTEGRATION.md) for the full request/response contract (`POST /auth/register`, `POST /auth/login`, `POST /auth/google`, `GET /auth/me`) and the status-to-message table the frontend relies on.
+See [`../docs/BACKEND_INTEGRATION.md`](../docs/BACKEND_INTEGRATION.md) for the full request/response contract (`POST /auth/register`, `POST /auth/login`, `POST /auth/google`, `GET /auth/me`, `GET`/`PATCH /users/me`) and the status-to-message table the frontend relies on.
 
 ## Project structure
 
@@ -79,6 +79,12 @@ backend/src/
 │   ├── auth.controller.ts     Express request handlers
 │   ├── auth.routes.ts         Route table + rate limiting
 │   └── auth.types.ts
+├── modules/users/
+│   ├── users.types.ts          FarmProfile shape (separate from the auth identity)
+│   ├── users.validation.ts     Zod schema for PATCH /users/me (a partial update)
+│   ├── users.service.ts        Reads/writes the profile fields on User
+│   ├── users.controller.ts     Express request handlers
+│   └── users.routes.ts         GET/PATCH /users/me, both behind requireAuth
 ├── middleware/
 │   ├── validate.ts            Body validation middleware
 │   ├── requireAuth.ts         JWT verification (+ requireRole for later)
