@@ -39,8 +39,8 @@ export function SidebarNav({ onNavigate }: SidebarNavProps) {
                 cn(
                   'flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-colors',
                   isActive
-                    ? 'bg-forest-900 text-bone-50 shadow-[0_1px_0_rgb(255_255_255/0.12)_inset]'
-                    : 'text-ink-soft hover:bg-forest-900/5 hover:text-ink',
+                    ? 'bg-app-accent text-app-accent-contrast shadow-[0_1px_0_rgb(255_255_255/0.12)_inset]'
+                    : 'text-app-ink-soft hover:bg-app-accent/5 hover:text-app-ink',
                 )
               }
             >
@@ -52,7 +52,7 @@ export function SidebarNav({ onNavigate }: SidebarNavProps) {
       </ul>
 
       <div>
-        <p className="mb-2 px-3.5 text-[0.65rem] font-semibold tracking-[0.16em] text-ink-soft/70 uppercase">
+        <p className="mb-2 px-3.5 text-[0.65rem] font-semibold tracking-[0.16em] text-app-ink-soft/70 uppercase">
           Coming soon
         </p>
         <ul className="flex flex-col gap-1">
@@ -61,7 +61,7 @@ export function SidebarNav({ onNavigate }: SidebarNavProps) {
               <span
                 aria-disabled="true"
                 title="Not built yet"
-                className="flex cursor-not-allowed items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-ink-soft/50"
+                className="flex cursor-not-allowed items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-app-ink-soft/50"
               >
                 <Icon className="size-4.5" aria-hidden="true" />
                 {label}
