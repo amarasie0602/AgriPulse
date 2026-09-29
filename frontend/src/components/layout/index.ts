@@ -1,2 +1,3 @@
 export { AppShell } from './AppShell'
-export { AuthLayout } from './AuthLayout'
+export { ConsoleAuthShell } from './ConsoleAuthShell'
+export { SmartFieldConsoleFrame } from './SmartFieldConsoleFrame'
