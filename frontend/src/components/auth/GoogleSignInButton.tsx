@@ -49,7 +49,7 @@ export function GoogleSignInButton({
         Continue with Google
         <span
           className={cn(
-            'ml-2 rounded-full border px-2 py-0.5 text-[0.65rem] font-semibold tracking-wide uppercase',
+            'ml-2 shrink-0 rounded-full border px-2 py-0.5 text-[0.6rem] font-semibold tracking-wide whitespace-nowrap uppercase',
             dark ? 'border-white/20 bg-white/10 text-bone-100/80' : 'border-bone-300 bg-bone-100 text-ink-soft',
           )}
         >
