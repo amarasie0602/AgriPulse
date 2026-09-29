@@ -14,6 +14,9 @@ const userSchema = new Schema(
     // local (linked by verified email) or was created by Google sign-in.
     googleId: { type: String, unique: true, sparse: true },
     farmName: { type: String, trim: true, maxlength: 80 },
+    location: { type: String, trim: true, maxlength: 120 },
+    farmSizeHectares: { type: Number, min: 0, max: 1_000_000 },
+    cropTypes: { type: [String], default: [] },
     role: { type: String, enum: ROLES, default: 'FARMER' },
   },
   { timestamps: true },
