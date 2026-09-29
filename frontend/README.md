@@ -6,7 +6,7 @@ This stage contains only the sign-in / registration experience, JWT session hand
 
 ## Stack
 
-React 19 · Vite · TypeScript (strict) · Tailwind CSS v4 · React Router 7 · Axios · Lucide React
+React 19 · Vite · TypeScript (strict) · Tailwind CSS v4 · React Router 7 · Axios · Lucide React · Google Identity Services (`@react-oauth/google`)
 
 ## Getting started
 
@@ -28,10 +28,11 @@ Other scripts:
 
 ### Environment variables
 
-| Variable             | Example                 | Purpose                                                             |
-| -------------------- | ----------------------- | ------------------------------------------------------------------- |
-| `VITE_API_URL`       | `http://localhost:3000` | Base URL of the NestJS API (no trailing `/`).                       |
-| `VITE_USE_MOCK_AUTH` | `true` / `false`        | Demo mode: sign in without a backend (dev server only, see below).  |
+| Variable                | Example                 | Purpose                                                             |
+| ----------------------- | ----------------------- | ------------------------------------------------------------------- |
+| `VITE_API_URL`          | `http://localhost:3000` | Base URL of the Express API (no trailing `/`).                      |
+| `VITE_USE_MOCK_AUTH`    | `true` / `false`        | Demo mode: sign in without a backend (dev server only, see below).  |
+| `VITE_GOOGLE_CLIENT_ID` | *(optional)*             | Enables "Continue with Google". See below.                          |
 
 ### Demo mode (no backend needed)
 
@@ -43,6 +44,18 @@ While the NestJS API isn't ready, set `VITE_USE_MOCK_AUTH=true` in `.env` and re
 - It works only on the dev server. A production build ignores the flag and always calls the real API.
 
 Set `VITE_USE_MOCK_AUTH=false` (the default in `.env.example`) once the backend is running.
+
+### Google sign-in (optional)
+
+"Continue with Google" appears on both the login and registration forms. Without `VITE_GOOGLE_CLIENT_ID` configured, it renders disabled with a "Setup needed" badge — it never pretends to work when it can't. To turn it on:
+
+1. Create an OAuth Client ID at [console.cloud.google.com/apis/credentials](https://console.cloud.google.com/apis/credentials) (see `.env.example` for the exact steps).
+2. Set the **same** client ID in `frontend/.env`'s `VITE_GOOGLE_CLIENT_ID` and `backend/.env`'s `GOOGLE_CLIENT_ID`.
+3. Restart both dev servers.
+
+Once configured, the real Google-branded button renders (via `@react-oauth/google`), and a successful sign-in calls `POST /auth/google` on the backend, which verifies the token against Google's own public keys before creating or signing in the account — see `docs/BACKEND_INTEGRATION.md`.
+
+In demo mode (`VITE_USE_MOCK_AUTH=true`) with a client ID configured, the button still works, but `mockAuthService` decodes the token's payload directly in the browser instead of sending it anywhere — there's no backend to verify it against, so this path never runs outside local development.
 
 Vite exposes only variables prefixed with `VITE_` to the browser, and everything in a frontend bundle is public. Never put secrets (JWT secret, database URL) in this file.
 
@@ -70,6 +83,7 @@ frontend/
     │   ├── auth/
     │   │   ├── LoginForm.tsx
     │   │   ├── RegisterForm.tsx
+    │   │   ├── GoogleSignInButton.tsx  Real button when configured, disabled fallback otherwise
     │   │   ├── PasswordInput.tsx    Show/hide toggle
     │   │   └── PasswordStrength.tsx
     │   ├── layout/
@@ -82,16 +96,17 @@ frontend/
     │   │   └── AppShell.tsx         Signed-in frame (header + sign out)
     │   └── ui/                      Button, TextField, Checkbox, Alert, Divider, Logo, …
     ├── pages/                       Login, Register, Dashboard (placeholder)
-    ├── context/AuthContext.tsx      user, token, login, register, logout, isAuthenticated, loading, hasRole
-    ├── hooks/                       useAuth, useForm, useDocumentTitle
+    ├── context/AuthContext.tsx      user, token, login, register, loginWithGoogle, logout, isAuthenticated, loading, hasRole
+    ├── hooks/                       useAuth, useForm, useDocumentTitle, useElementWidth
     ├── routes/                      ProtectedRoute, PublicOnlyRoute
+    ├── config/google.ts             isGoogleAuthEnabled, googleClientId (from VITE_GOOGLE_CLIENT_ID)
     ├── services/
     │   ├── api.ts                   Axios instance + interceptors
-    │   ├── authService.ts           /auth/login, /auth/register
+    │   ├── authService.ts           /auth/login, /auth/register, /auth/google
     │   ├── errors.ts                HTTP status → friendly message
     │   └── tokenStorage.ts          Session persistence
     ├── types/                       Auth and navigation types
-    └── utils/                       validators, jwt, cn
+    └── utils/                       validators, jwt (decode + expiry), cn
 ```
 
 ## How authentication works
@@ -152,6 +167,6 @@ Semantic landmarks and headings, a visible label for every field, `aria-invalid`
 
 ## Design notes
 
-Palette (defined as tokens in `src/index.css`): deep forest, warm bone surfaces, wheat and clay accents. Display type is Fraunces, body type is Manrope (loaded from Google Fonts in `index.html`). The figures on the brand panel (78 %, 4.82 t CO₂e) are labelled **Sample** and are illustrative only. "Continue with Google" is intentionally disabled — no OAuth provider exists on the backend yet.
+Palette (defined as tokens in `src/index.css`): deep forest, warm bone surfaces, wheat and clay accents. Display type is Fraunces, body type is Manrope (loaded from Google Fonts in `index.html`). The figures on the brand panel (78 %, 4.82 t CO₂e) are labelled **Sample** and are illustrative only. "Continue with Google" renders Google's own button once configured (see above) — its look follows Google's branding guidelines, not this design system.
 
-See [`../docs/BACKEND_INTEGRATION.md`](../docs/BACKEND_INTEGRATION.md) for the API contract and required NestJS changes.
+See [`../docs/BACKEND_INTEGRATION.md`](../docs/BACKEND_INTEGRATION.md) for the API contract and backend architecture.

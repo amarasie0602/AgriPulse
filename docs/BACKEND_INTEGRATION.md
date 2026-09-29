@@ -46,6 +46,24 @@ Response (`200`):
 
 The same `401` is used for "unknown email" and "wrong password" so the API never reveals which emails are registered.
 
+### `POST /auth/google`
+
+```json
+{ "credential": "eyJhbGciOi..." }
+```
+
+`credential` is the ID token Google Identity Services hands the frontend after the person picks an account — the frontend never sees or handles a Google password. The backend verifies it against Google's public keys (via `google-auth-library`), so a forged or tampered token is rejected before any user lookup happens. On success it returns the same shape as `/auth/login`, creating the user on first sign-in or linking Google to an existing account with the same (Google-verified) email.
+
+| Status | Meaning                              | Message shown to the user                                        |
+| ------ | -------------------------------------- | -------------------------------------------------------------------- |
+| 200    | Signed in (account created if new)     | —                                                                     |
+| 400    | Missing `credential`                   | "Please check the details you entered and try again."                |
+| 401    | Invalid/expired/forged token           | "Google sign-in failed. Please try again."                            |
+| 403    | Google email not verified              | "Please verify your email with Google before continuing."             |
+| 503    | `GOOGLE_CLIENT_ID` not set on the server | "Google sign-in is not set up yet. Please sign in with email instead." |
+
+Enabling it requires **the same Client ID on both sides**: `GOOGLE_CLIENT_ID` in `backend/.env` and `VITE_GOOGLE_CLIENT_ID` in `frontend/.env`. See either `.env.example` for how to create one. Leaving both unset keeps the "Continue with Google" button visibly disabled rather than silently broken.
+
 ### `GET /auth/me`
 
 Protected (`Authorization: Bearer <token>`). Returns the current user, in the same shape as `login`'s `user`. Not yet called by the frontend; available for a future "validate stored session" check.
@@ -58,6 +76,7 @@ Protected (`Authorization: Bearer <token>`). Returns the current user, in the sa
 4. After login, the token is stored (see `frontend/README.md`) and every later request carries `Authorization: Bearer <access_token>`.
 5. If a protected endpoint answers `401`, the frontend clears the session and redirects to `/login` with a "session expired" notice.
 6. The frontend reads the JWT's `exp` claim (without verifying it) to sign the user out when it expires. The backend always signs tokens with an expiry (`JWT_EXPIRES_IN`, default `1d`).
+7. "Continue with Google" posts the Google ID token to `POST /auth/google` and stores the returned session exactly like a normal login. In the frontend's offline demo mode (`VITE_USE_MOCK_AUTH=true`), the same button instead decodes that token's payload directly in the browser — no signature check — since there's no backend there to verify it against Google; the real path above is always used against the actual API.
 
 ## Running the backend
 
