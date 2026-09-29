@@ -36,6 +36,26 @@
   --color-danger-border: #ecc3b4;
   --color-danger-text: #8a3418;
 
+  /*
+   * App surface tokens — used only by the signed-in dashboard (DashboardShell,
+   * Dashboard, FarmProfile, ResourceTracking), never by the always-dark
+   * Login/Register console. Light values below; dark values are defined in
+   * the `[data-theme="dark"]` override further down this file. Reusing the
+   * palette above (not new colors) keeps light/dark visually related.
+   */
+  --color-app-bg: var(--color-bone-100);
+  --color-app-surface: var(--color-bone-50);
+  --color-app-chip: #ffffff;
+  --color-app-border: var(--color-bone-300);
+  --color-app-ink: var(--color-ink);
+  --color-app-ink-soft: var(--color-ink-soft);
+  --color-app-heading: var(--color-forest-900);
+  --color-app-link: var(--color-forest-700);
+  --color-app-accent: var(--color-forest-900);
+  --color-app-accent-contrast: var(--color-bone-50);
+  --color-app-danger-bg: var(--color-danger-bg);
+  --color-app-danger-text: var(--color-danger-text);
+
   --shadow-card: 0 1px 0 rgb(255 255 255 / 0.7) inset, 0 1px 2px rgb(12 42 32 / 0.06),
     0 24px 48px -24px rgb(12 42 32 / 0.25);
   --shadow-glass: 0 10px 40px -12px rgb(0 0 0 / 0.45);
@@ -92,18 +112,45 @@
   }
 }
 
+/*
+ * Dark-mode values for the app-* tokens above. Scoped to `data-theme="dark"`
+ * on <html>, set by ThemeContext (see context/ThemeContext.tsx). Only
+ * dashboard-area components reference these tokens, so this never affects
+ * the Login/Register console, which stays permanently dark by design.
+ */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-app-bg: var(--color-forest-950);
+  --color-app-surface: var(--color-forest-900);
+  --color-app-chip: var(--color-forest-800);
+  --color-app-border: var(--color-forest-700);
+  --color-app-ink: var(--color-bone-50);
+  --color-app-ink-soft: var(--color-moss-300);
+  --color-app-heading: var(--color-bone-50);
+  --color-app-link: var(--color-wheat-300);
+  --color-app-accent: var(--color-wheat-500);
+  --color-app-accent-contrast: var(--color-forest-950);
+  --color-app-danger-bg: rgb(244 63 94 / 0.14);
+  --color-app-danger-text: #fda4af;
+}
+
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
+    color-scheme: light;
   }
 
   body {
     margin: 0;
-    background-color: var(--color-bone-100);
-    color: var(--color-ink);
+    /* Matches whichever screen is on top — the console sets its own full-bleed
+       background regardless, this just avoids a mismatched flash at scroll bounds. */
+    background-color: var(--color-app-bg);
+    color: var(--color-app-ink);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    transition: background-color 0.2s ease;
   }
 
   :focus-visible {
