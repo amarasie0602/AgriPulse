@@ -1,6 +1,6 @@
 # AgriPulse — Frontend
 
-Authentication foundation for **AgriPulse**, a smart farm sustainability and resource management platform.
+Authentication foundation for **AgriPulse**, a smart farm sustainability and resource management platform built on the MERN stack. This is the "R" — the client. See [`../backend/README.md`](../backend/README.md) for the Express + MongoDB API.
 
 This stage contains only the sign-in / registration experience, JWT session handling and a protected-route foundation. The farm dashboard, resource tracking, carbon calculator, simulator, analytics and maps come later.
 
