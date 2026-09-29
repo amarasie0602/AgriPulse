@@ -11,7 +11,7 @@ export class AuthError extends Error {
   }
 }
 
-type AuthAction = 'login' | 'register'
+type AuthAction = 'login' | 'register' | 'google'
 
 export const NETWORK_ERROR_MESSAGE = 'Unable to connect to AgriPulse. Please try again.'
 
@@ -35,13 +35,29 @@ export function toAuthError(error: unknown, action: AuthAction): AuthError {
       return new AuthError(
         action === 'login'
           ? 'Incorrect email or password.'
-          : 'Your session has expired. Please sign in again.',
+          : action === 'google'
+            ? 'Google sign-in failed. Please try again.'
+            : 'Your session has expired. Please sign in again.',
+        status,
+      )
+    case 403:
+      return new AuthError(
+        action === 'google'
+          ? 'Please verify your email with Google before continuing.'
+          : 'You do not have access to this resource.',
         status,
       )
     case 409:
       return new AuthError('An account with this email already exists.', status)
     case 429:
       return new AuthError('Too many attempts. Please wait a moment and try again.', status)
+    case 503:
+      return new AuthError(
+        action === 'google'
+          ? 'Google sign-in is not set up yet. Please sign in with email instead.'
+          : 'AgriPulse is temporarily unavailable. Please try again shortly.',
+        status,
+      )
     default:
       if (status >= 500) {
         return new AuthError('AgriPulse ran into a problem. Please try again shortly.', status)
