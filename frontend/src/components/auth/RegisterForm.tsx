@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { CircleCheck, Mail, Sprout, User } from 'lucide-react'
 import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
+import { Divider } from '@/components/ui/Divider'
 import { TextField } from '@/components/ui/TextField'
 import { isMockAuthEnabled } from '@/services/authService'
 import { useAuth } from '@/hooks/useAuth'
@@ -16,6 +17,7 @@ import {
   validatePassword,
 } from '@/utils/validators'
 import { DemoModeNotice } from './DemoModeNotice'
+import { GoogleSignInButton } from './GoogleSignInButton'
 import { PasswordInput } from './PasswordInput'
 import { PasswordStrength } from './PasswordStrength'
 
@@ -80,6 +82,13 @@ export function RegisterForm() {
   }
 
   const locked = submitting || succeeded
+
+  // Google has no separate "confirm your details" step: a successful sign-in
+  // means the account already exists (created on first sign-in if needed),
+  // so it goes straight to the workspace instead of back to /login.
+  function handleGoogleSuccess(): void {
+    navigate('/dashboard', { replace: true })
+  }
 
   return (
     <div className="rounded-3xl border border-bone-300/70 bg-bone-50/80 p-7 shadow-card backdrop-blur-sm sm:p-9">
@@ -155,6 +164,17 @@ export function RegisterForm() {
           </Button>
         )}
       </form>
+
+      <div className="my-6">
+        <Divider label="OR" />
+      </div>
+
+      <GoogleSignInButton
+        intent="signup"
+        disabled={locked}
+        onSuccess={handleGoogleSuccess}
+        onError={(message) => setSubmitError(message)}
+      />
 
       <p className="mt-7 text-center text-sm text-ink-soft">
         Already have an account?{' '}

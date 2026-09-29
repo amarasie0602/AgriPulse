@@ -5,7 +5,6 @@ import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { Divider } from '@/components/ui/Divider'
-import { GoogleIcon } from '@/components/ui/GoogleIcon'
 import { TextField } from '@/components/ui/TextField'
 import { isMockAuthEnabled } from '@/services/authService'
 import { DEMO_CREDENTIALS } from '@/services/mockAuthService'
@@ -14,6 +13,7 @@ import { useForm, type Validators } from '@/hooks/useForm'
 import type { AuthLocationState } from '@/types'
 import { validateEmail, validatePassword } from '@/utils/validators'
 import { DemoModeNotice } from './DemoModeNotice'
+import { GoogleSignInButton } from './GoogleSignInButton'
 import { PasswordInput } from './PasswordInput'
 
 interface LoginValues extends Record<string, string> {
@@ -42,6 +42,8 @@ export function LoginForm() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [showResetNotice, setShowResetNotice] = useState(false)
 
+  const goToDestination = () => navigate(state.from ?? '/dashboard', { replace: true })
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (submitting || !validate(formRef.current)) return
@@ -50,7 +52,7 @@ export function LoginForm() {
     setSubmitError(null)
     try {
       await login({ email: values.email, password: values.password }, { remember })
-      navigate(state.from ?? '/dashboard', { replace: true })
+      goToDestination()
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Something went wrong. Please try again.')
       setSubmitting(false)
@@ -138,19 +140,12 @@ export function LoginForm() {
         <Divider label="OR" />
       </div>
 
-      <Button
-        variant="secondary"
-        fullWidth
-        disabled
-        leftIcon={<GoogleIcon className="size-4.5" />}
-        aria-label="Continue with Google (not available yet)"
-        title="Google sign-in isn't available yet"
-      >
-        Continue with Google
-        <span className="ml-2 rounded-full border border-bone-300 bg-bone-100 px-2 py-0.5 text-[0.65rem] font-semibold tracking-wide text-ink-soft uppercase">
-          Soon
-        </span>
-      </Button>
+      <GoogleSignInButton
+        intent="signin"
+        disabled={submitting}
+        onSuccess={goToDestination}
+        onError={(message) => setSubmitError(message)}
+      />
 
       <p className="mt-7 text-center text-sm text-ink-soft">
         Don't have an account?{' '}
