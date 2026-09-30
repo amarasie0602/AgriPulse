@@ -1,12 +1,12 @@
 # AgriPulse — Frontend
 
-Authentication foundation for **AgriPulse**, a smart farm sustainability and resource management platform.
+Authentication foundation for **AgriPulse**, a smart farm sustainability and resource management platform built on the MERN stack. This is the "R" — the client. See [`../backend/README.md`](../backend/README.md) for the Express + MongoDB API.
 
 This stage contains only the sign-in / registration experience, JWT session handling and a protected-route foundation. The farm dashboard, resource tracking, carbon calculator, simulator, analytics and maps come later.
 
 ## Stack
 
-React 19 · Vite · TypeScript (strict) · Tailwind CSS v4 · React Router 7 · Axios · Lucide React
+React 19 · Vite · TypeScript (strict) · Tailwind CSS v4 · React Router 7 · Axios · Lucide React · Google Identity Services (`@react-oauth/google`)
 
 ## Getting started
 
@@ -28,10 +28,11 @@ Other scripts:
 
 ### Environment variables
 
-| Variable             | Example                 | Purpose                                                             |
-| -------------------- | ----------------------- | ------------------------------------------------------------------- |
-| `VITE_API_URL`       | `http://localhost:3000` | Base URL of the NestJS API (no trailing `/`).                       |
-| `VITE_USE_MOCK_AUTH` | `true` / `false`        | Demo mode: sign in without a backend (dev server only, see below).  |
+| Variable                | Example                 | Purpose                                                             |
+| ----------------------- | ----------------------- | ------------------------------------------------------------------- |
+| `VITE_API_URL`          | `http://localhost:3000` | Base URL of the Express API (no trailing `/`).                      |
+| `VITE_USE_MOCK_AUTH`    | `true` / `false`        | Demo mode: sign in without a backend (dev server only, see below).  |
+| `VITE_GOOGLE_CLIENT_ID` | *(optional)*             | Enables "Continue with Google". See below.                          |
 
 ### Demo mode (no backend needed)
 
@@ -44,16 +45,31 @@ While the NestJS API isn't ready, set `VITE_USE_MOCK_AUTH=true` in `.env` and re
 
 Set `VITE_USE_MOCK_AUTH=false` (the default in `.env.example`) once the backend is running.
 
+### Google sign-in (optional)
+
+"Continue with Google" appears on both the login and registration forms. Without `VITE_GOOGLE_CLIENT_ID` configured, it renders disabled with a "Setup needed" badge — it never pretends to work when it can't. To turn it on:
+
+1. Create an OAuth Client ID at [console.cloud.google.com/apis/credentials](https://console.cloud.google.com/apis/credentials) (see `.env.example` for the exact steps).
+2. Set the **same** client ID in `frontend/.env`'s `VITE_GOOGLE_CLIENT_ID` and `backend/.env`'s `GOOGLE_CLIENT_ID`.
+3. Restart both dev servers.
+
+Once configured, the real Google-branded button renders (via `@react-oauth/google`), and a successful sign-in calls `POST /auth/google` on the backend, which verifies the token against Google's own public keys before creating or signing in the account — see `docs/BACKEND_INTEGRATION.md`.
+
+In demo mode (`VITE_USE_MOCK_AUTH=true`) with a client ID configured, the button still works, but `mockAuthService` decodes the token's payload directly in the browser instead of sending it anywhere — there's no backend to verify it against, so this path never runs outside local development.
+
 Vite exposes only variables prefixed with `VITE_` to the browser, and everything in a frontend bundle is public. Never put secrets (JWT secret, database URL) in this file.
 
 ## Routes
 
-| Path         | Access       | Notes                                                       |
-| ------------ | ------------ | ----------------------------------------------------------- |
-| `/login`     | Public only  | Signed-in users are redirected to `/dashboard`.             |
-| `/register`  | Public only  | On success, goes to `/login` with a confirmation banner.    |
-| `/dashboard` | Protected    | Placeholder. Unauthenticated users are sent to `/login`.    |
-| `/`, `*`     | —            | Redirect to `/dashboard`.                                   |
+| Path         | Access       | Notes                                                            |
+| ------------ | ------------ | ------------------------------------------------------------------- |
+| `/login`     | Public only  | Signed-in users are redirected to `/dashboard`.                     |
+| `/register`  | Public only  | On success, goes to `/login` with a confirmation banner.            |
+| `/dashboard` | Protected    | Overview: farm summary, profile-completion prompt, upcoming modules. |
+| `/profile`   | Protected    | Farm profile form (name, location, size, crop types).               |
+| `/`, `*`     | —            | Redirect to `/dashboard`.                                            |
+
+`/dashboard` and `/profile` share the `DashboardShell` layout (sidebar on desktop, a slide-over drawer on mobile).
 
 ## Folder structure
 
@@ -63,35 +79,40 @@ frontend/
 ├── index.html
 ├── vite.config.ts
 └── src/
-    ├── main.tsx                     Providers: Router → AuthProvider → App
+    ├── main.tsx                     Providers: Router → GoogleOAuthProvider → AuthProvider → App
     ├── App.tsx                      Route table
     ├── index.css                    Tailwind import + design tokens + animations
     ├── components/
     │   ├── auth/
-    │   │   ├── LoginForm.tsx
+    │   │   ├── LoginForm.tsx        Sign-in panel (Smart Field Console)
     │   │   ├── RegisterForm.tsx
+    │   │   ├── GoogleSignInButton.tsx  Real button when configured, disabled fallback otherwise
     │   │   ├── PasswordInput.tsx    Show/hide toggle
     │   │   └── PasswordStrength.tsx
     │   ├── layout/
-    │   │   ├── AuthLayout.tsx       Split-screen shell
-    │   │   ├── BrandPanel.tsx       Desktop brand side
-    │   │   ├── MobileBrandHeader.tsx
-    │   │   ├── FieldVisualization.tsx  Abstract precision-agriculture SVG
-    │   │   ├── FloatingStatCard.tsx    Glass cards (sample data)
-    │   │   ├── ContourLines.tsx
-    │   │   └── AppShell.tsx         Signed-in frame (header + sign out)
-    │   └── ui/                      Button, TextField, Checkbox, Alert, Divider, Logo, …
-    ├── pages/                       Login, Register, Dashboard (placeholder)
-    ├── context/AuthContext.tsx      user, token, login, register, logout, isAuthenticated, loading, hasRole
-    ├── hooks/                       useAuth, useForm, useDocumentTitle
+    │   │   ├── ConsoleAuthShell.tsx     Dark shell shared by Login/Register
+    │   │   ├── SmartFieldConsoleFrame.tsx  Ring + orbiting sample-data cards around Login
+    │   │   ├── SmartFieldConsole.tsx / OrbitMetricCard.tsx / AerialFieldBackdrop.tsx / ContourLines.tsx
+    │   │   ├── DashboardShell.tsx   Signed-in frame: sidebar (desktop) / drawer (mobile) + outlet
+    │   │   └── SidebarNav.tsx       Nav links + "Coming soon" section, shared by both
+    │   └── ui/                      Button, TextField, Checkbox, ChipInput, Alert, Divider, Logo, …
+    │                                 (TextField/Checkbox/Alert/Divider/Button take a light/dark `tone`)
+    ├── pages/
+    │   ├── Login.tsx / Register.tsx
+    │   ├── Dashboard.tsx            Overview
+    │   └── FarmProfile.tsx          Edit farm name, location, size, crop types
+    ├── context/AuthContext.tsx      user, token, login, register, loginWithGoogle, logout, isAuthenticated, loading, hasRole
+    ├── hooks/                       useAuth, useProfile, useForm, useDocumentTitle, useElementWidth
     ├── routes/                      ProtectedRoute, PublicOnlyRoute
+    ├── config/google.ts             isGoogleAuthEnabled, googleClientId (from VITE_GOOGLE_CLIENT_ID)
     ├── services/
     │   ├── api.ts                   Axios instance + interceptors
-    │   ├── authService.ts           /auth/login, /auth/register
+    │   ├── authService.ts           /auth/login, /auth/register, /auth/google
+    │   ├── profileService.ts        GET/PATCH /users/me (real + offline demo)
     │   ├── errors.ts                HTTP status → friendly message
     │   └── tokenStorage.ts          Session persistence
-    ├── types/                       Auth and navigation types
-    └── utils/                       validators, jwt, cn
+    ├── types/                       Auth, navigation and farm profile types
+    └── utils/                       validators, jwt (decode + expiry), cn
 ```
 
 ## How authentication works
@@ -152,6 +173,6 @@ Semantic landmarks and headings, a visible label for every field, `aria-invalid`
 
 ## Design notes
 
-Palette (defined as tokens in `src/index.css`): deep forest, warm bone surfaces, wheat and clay accents. Display type is Fraunces, body type is Manrope (loaded from Google Fonts in `index.html`). The figures on the brand panel (78 %, 4.82 t CO₂e) are labelled **Sample** and are illustrative only. "Continue with Google" is intentionally disabled — no OAuth provider exists on the backend yet.
+Palette (defined as tokens in `src/index.css`): deep forest, warm bone surfaces, wheat and clay accents. Display type is Fraunces, body type is Manrope (loaded from Google Fonts in `index.html`). The figures on the brand panel (78 %, 4.82 t CO₂e) are labelled **Sample** and are illustrative only. "Continue with Google" renders Google's own button once configured (see above) — its look follows Google's branding guidelines, not this design system.
 
-See [`../docs/BACKEND_INTEGRATION.md`](../docs/BACKEND_INTEGRATION.md) for the API contract and required NestJS changes.
+See [`../docs/BACKEND_INTEGRATION.md`](../docs/BACKEND_INTEGRATION.md) for the API contract and backend architecture.

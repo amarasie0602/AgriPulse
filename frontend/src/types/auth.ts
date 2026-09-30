@@ -37,4 +37,6 @@ export interface AuthSession {
 export interface AuthService {
   login(payload: LoginPayload): Promise<AuthSession>
   register(payload: RegisterPayload): Promise<void>
+  /** `credential` is the ID token Google Identity Services hands back on success. */
+  loginWithGoogle(credential: string): Promise<AuthSession>
 }

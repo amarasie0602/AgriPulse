@@ -1,8 +1,19 @@
-import type { AuthService, AuthSession, AuthUser, LoginPayload, RegisterPayload } from '@/types'
+import type {
+  AuthService,
+  AuthSession,
+  AuthUser,
+  FarmProfile,
+  LoginPayload,
+  ProfileService,
+  RegisterPayload,
+  UpdateProfileInput,
+} from '@/types'
+import { decodeJwtPayload } from '@/utils/jwt'
 import { AuthError } from './errors'
+import { tokenStorage } from './tokenStorage'
 
 /**
- * Offline stand-in for the NestJS auth endpoints, used only in development
+ * Offline stand-in for the Express auth endpoints, used only in development
  * (see VITE_USE_MOCK_AUTH). Accounts live in this browser's localStorage and
  * are never sent anywhere. It mirrors the real API's behaviour and messages
  * so the UI flow is identical.
@@ -15,8 +26,21 @@ const TOKEN_LIFETIME_S = 60 * 60 * 24
 export const DEMO_CREDENTIALS = { email: 'demo@agripulse.dev', password: 'password123' } as const
 
 interface StoredUser extends AuthUser {
-  passwordHash: string
+  /** Absent for accounts created via the (mock) Google sign-in below. */
+  passwordHash?: string
   farmName?: string
+  location?: string
+  farmSizeHectares?: number
+  cropTypes?: string[]
+  createdAt?: string
+}
+
+/** Fields this mock reads out of the ID token Google Identity Services returns. Not verified. */
+interface GoogleCredentialPayload {
+  email?: string
+  email_verified?: boolean
+  name?: string
+  sub?: string
 }
 
 const wait = () => new Promise((resolve) => setTimeout(resolve, LATENCY_MS))
@@ -40,6 +64,10 @@ function writeUsers(users: StoredUser[]): void {
   localStorage.setItem(USERS_KEY, JSON.stringify(users))
 }
 
+function nextId(users: StoredUser[]): number {
+  return Math.max(0, ...users.map((user) => Number(user.id))) + 1
+}
+
 /** Ensures the demo account exists so there is always something to sign in with. */
 async function seedDemoUser(): Promise<StoredUser[]> {
   const users = readUsers()
@@ -51,7 +79,11 @@ async function seedDemoUser(): Promise<StoredUser[]> {
     email: DEMO_CREDENTIALS.email,
     role: 'FARMER',
     farmName: 'Demo Farm',
+    location: 'Kandy, Sri Lanka',
+    farmSizeHectares: 8.5,
+    cropTypes: ['Rice', 'Tea'],
     passwordHash: await hash(DEMO_CREDENTIALS.password),
+    createdAt: new Date().toISOString(),
   })
   writeUsers(users)
   return users
@@ -72,7 +104,7 @@ export const mockAuthService: AuthService = {
     const users = await seedDemoUser()
     const found = users.find((user) => user.email === email.trim().toLowerCase())
 
-    if (!found || found.passwordHash !== (await hash(password))) {
+    if (!found?.passwordHash || found.passwordHash !== (await hash(password))) {
       throw new AuthError('Incorrect email or password.', 401)
     }
 
@@ -90,13 +122,100 @@ export const mockAuthService: AuthService = {
     }
 
     users.push({
-      id: Math.max(0, ...users.map((user) => Number(user.id))) + 1,
+      id: nextId(users),
       name: name.trim(),
       email: normalized,
       role: 'FARMER',
       farmName: farmName?.trim() || undefined,
       passwordHash: await hash(password),
+      createdAt: new Date().toISOString(),
     })
     writeUsers(users)
+  },
+
+  /**
+   * Reads the Google ID token's payload directly in the browser (no
+   * signature check — there's no backend here to verify it against Google).
+   * This is fine for a local demo: nothing more sensitive than a placeholder
+   * dashboard is guarded by it, and real deployments always go through
+   * authService's HTTP path, which verifies the token server-side.
+   */
+  async loginWithGoogle(credential: string): Promise<AuthSession> {
+    await wait()
+    const payload = decodeJwtPayload<GoogleCredentialPayload>(credential)
+
+    if (!payload?.email) {
+      throw new AuthError('Google sign-in failed. Please try again.', 401)
+    }
+    if (!payload.email_verified) {
+      throw new AuthError('Please verify your email with Google before continuing.', 403)
+    }
+
+    const email = payload.email.toLowerCase()
+    const users = await seedDemoUser()
+    let found = users.find((user) => user.email === email)
+
+    if (!found) {
+      found = {
+        id: nextId(users),
+        name: payload.name?.trim() || email.split('@')[0],
+        email,
+        role: 'FARMER',
+        createdAt: new Date().toISOString(),
+      }
+      users.push(found)
+      writeUsers(users)
+    }
+
+    const user: AuthUser = { id: found.id, name: found.name, email: found.email, role: found.role }
+    return { token: createToken(user), user }
+  },
+}
+
+function toFarmProfile(user: StoredUser): FarmProfile {
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    farmName: user.farmName,
+    location: user.location,
+    farmSizeHectares: user.farmSizeHectares,
+    cropTypes: user.cropTypes ?? [],
+    authProvider: user.passwordHash ? 'local' : 'google',
+    createdAt: user.createdAt ?? new Date().toISOString(),
+  }
+}
+
+/** Same tokenless-checks-aside pattern as mockAuthService: no backend, storage only. */
+export const mockProfileService: ProfileService = {
+  async getProfile(): Promise<FarmProfile> {
+    await wait()
+    const session = tokenStorage.load()
+    if (!session) throw new AuthError('Your session has expired. Please sign in again.', 401)
+
+    const users = readUsers()
+    const found = users.find((user) => user.id === session.user.id)
+    if (!found) throw new AuthError('Your account could not be found. Please sign in again.', 404)
+
+    return toFarmProfile(found)
+  },
+
+  async updateProfile(input: UpdateProfileInput): Promise<FarmProfile> {
+    await wait()
+    const session = tokenStorage.load()
+    if (!session) throw new AuthError('Your session has expired. Please sign in again.', 401)
+
+    const users = readUsers()
+    const found = users.find((user) => user.id === session.user.id)
+    if (!found) throw new AuthError('Your account could not be found. Please sign in again.', 404)
+
+    if (input.farmName !== undefined) found.farmName = input.farmName
+    if (input.location !== undefined) found.location = input.location
+    if (input.farmSizeHectares !== undefined) found.farmSizeHectares = input.farmSizeHectares
+    if (input.cropTypes !== undefined) found.cropTypes = input.cropTypes
+
+    writeUsers(users)
+    return toFarmProfile(found)
   },
 }

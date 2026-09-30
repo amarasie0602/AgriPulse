@@ -34,6 +34,19 @@ const httpAuthService: AuthService = {
       throw toAuthError(error, 'register')
     }
   },
+
+  async loginWithGoogle(credential) {
+    try {
+      const { data } = await api.post<LoginResponse>('/auth/google', { credential })
+
+      if (!data?.access_token || !data.user) {
+        throw new AuthError('Unexpected response from AgriPulse. Please try again.')
+      }
+      return { token: data.access_token, user: data.user }
+    } catch (error) {
+      throw toAuthError(error, 'google')
+    }
+  },
 }
 
 /**

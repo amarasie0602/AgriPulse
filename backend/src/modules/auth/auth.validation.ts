@@ -23,5 +23,13 @@ export const loginSchema = z
   })
   .strict();
 
+export const googleAuthSchema = z
+  .object({
+    // The ID token (JWT) returned by Google Identity Services on the frontend.
+    credential: z.string().min(1, 'Missing Google credential.'),
+  })
+  .strict();
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type GoogleAuthInput = z.infer<typeof googleAuthSchema>;

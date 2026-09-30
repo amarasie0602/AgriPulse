@@ -1,8 +1,10 @@
 /**
- * Reads the `exp` claim from a JWT for client-side session housekeeping only.
- * The signature is NOT verified here — the backend remains the source of truth.
+ * Decodes a JWT's payload for client-side use only (session expiry, reading
+ * a Google credential's profile fields in demo mode). The signature is NOT
+ * verified here — the backend remains the source of truth for anything that
+ * matters security-wise.
  */
-export function getTokenExpiry(token: string): number | null {
+export function decodeJwtPayload<T = Record<string, unknown>>(token: string): T | null {
   try {
     const payload = token.split('.')[1]
     if (!payload) return null
@@ -14,12 +16,16 @@ export function getTokenExpiry(token: string): number | null {
         .map((char) => '%' + char.charCodeAt(0).toString(16).padStart(2, '0'))
         .join(''),
     )
-    const { exp } = JSON.parse(json) as { exp?: unknown }
-
-    return typeof exp === 'number' ? exp * 1000 : null
+    return JSON.parse(json) as T
   } catch {
     return null
   }
+}
+
+/** Reads the `exp` claim (seconds since epoch) and converts it to a millisecond timestamp. */
+export function getTokenExpiry(token: string): number | null {
+  const payload = decodeJwtPayload<{ exp?: unknown }>(token)
+  return payload && typeof payload.exp === 'number' ? payload.exp * 1000 : null
 }
 
 export function isTokenExpired(token: string): boolean {

@@ -1,7 +1,10 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
+import { DashboardShell } from '@/components/layout'
 import Dashboard from '@/pages/Dashboard'
+import FarmProfile from '@/pages/FarmProfile'
 import Login from '@/pages/Login'
 import Register from '@/pages/Register'
+import ResourceTracking from '@/pages/ResourceTracking'
 import { ProtectedRoute, PublicOnlyRoute } from '@/routes'
 
 export default function App() {
@@ -13,7 +16,11 @@ export default function App() {
       </Route>
 
       <Route element={<ProtectedRoute />}>
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route element={<DashboardShell />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/resources" element={<ResourceTracking />} />
+          <Route path="/profile" element={<FarmProfile />} />
+        </Route>
       </Route>
 
       <Route path="/" element={<Navigate to="/dashboard" replace />} />

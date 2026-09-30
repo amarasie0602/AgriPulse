@@ -7,6 +7,8 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(16, 'JWT_SECRET must be at least 16 characters'),
   JWT_EXPIRES_IN: z.string().default('1d'),
   FRONTEND_URL: z.string().default('http://localhost:5173'),
+  /** Optional: enables POST /auth/google. Must match the frontend's VITE_GOOGLE_CLIENT_ID. */
+  GOOGLE_CLIENT_ID: z.string().trim().min(1).optional(),
   PORT: z.coerce.number().int().positive().default(3000),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 });
