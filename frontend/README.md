@@ -99,8 +99,9 @@ frontend/
     │                                 (TextField/Select/Checkbox/Alert/Divider/Button take a light/dark `tone`/`surface`/`variant`)
     ├── pages/
     │   ├── Login.tsx / Register.tsx
-    │   ├── Dashboard.tsx            Overview: farm summary, resource totals, upcoming modules
+    │   ├── Dashboard.tsx            Overview: farm summary, resource + carbon teasers, upcoming modules
     │   ├── ResourceTracking.tsx     Log + list water/energy/input usage, per-type totals
+    │   ├── CarbonCalculator.tsx     CO₂e estimate computed from the Resource Tracking log — no new data model
     │   └── FarmProfile.tsx          Edit farm name, location, size, crop types
     ├── context/
     │   ├── AuthContext.tsx           user, token, login, register, loginWithGoogle, logout, isAuthenticated, loading, hasRole
@@ -116,7 +117,7 @@ frontend/
     │   ├── errors.ts                HTTP status → friendly message
     │   └── tokenStorage.ts          Session persistence
     ├── types/                       Auth, navigation, farm profile and resource entry types
-    └── utils/                       validators, jwt (decode + expiry), cn
+    └── utils/                       validators, jwt (decode + expiry), carbon (emission estimate), cn
 ```
 
 ## Light / dark mode
@@ -127,6 +128,14 @@ The signed-in dashboard (Overview, Resource Tracking, Farm Profile — everythin
 - **Persisted:** an explicit choice is saved to `localStorage` (`agripulse.theme`) and applied on every future visit.
 - **No flash:** a small inline script in `index.html` sets `<html data-theme="...">` before React mounts.
 - **How it works:** `index.css` defines a small set of `--color-app-*` CSS tokens (background, surface, border, text, accent, …) with light values in `@theme` and dark overrides under `:root[data-theme="dark"]`. Dashboard-area components use `bg-app-surface`, `text-app-heading`, etc. instead of literal palette colors, so they repaint automatically — no per-component dark-mode logic needed beyond passing `tone={theme}` (or `variant={theme === 'dark' ? 'gold' : 'primary'}` for CTAs) to the shared `ui/` atoms, reusing the same dark styling already built for the login console.
+
+## Carbon Calculator
+
+`/carbon` has no data model or backend endpoint of its own — it's a pure client-side computation (`utils/carbon.ts`) over the same resource entries `/resources` already returns, so there's one source of truth instead of two parallel logs a farmer would have to keep in sync.
+
+- **Emission factors** are simplified, illustrative defaults (e.g. diesel 2.68 kg CO₂e/L, grid electricity 0.42 kg CO₂e/kWh) applied to `FUEL`, `ENERGY`, `FERTILIZER` and `PESTICIDE` entries. The page says outright that these are a guide, not a certified calculation — same honesty convention as the "Sample" badges on the login page.
+- **Unit-matched only:** an entry only counts if its `unit` matches the factor's expected unit (e.g. fuel in `L`). Since Resource Tracking's unit field is free text, an entry logged in a different unit is excluded from the total and called out in the breakdown ("N entries logged in a different unit, not counted") rather than silently mis-converted.
+- **`WATER` and `OTHER`** are never counted toward the total — water's footprint is mostly indirect (pumping energy, already under `ENERGY`), and `OTHER` is too vague to estimate.
 
 ## How authentication works
 
