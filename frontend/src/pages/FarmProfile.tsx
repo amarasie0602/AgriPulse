@@ -4,7 +4,7 @@ import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
 import { ChipInput } from '@/components/ui/ChipInput'
 import { TextField } from '@/components/ui/TextField'
-import { useDocumentTitle, useProfile } from '@/hooks'
+import { useDocumentTitle, useProfile, useTheme } from '@/hooks'
 import { validateFarmName } from '@/utils/validators'
 
 const AUTH_PROVIDER_LABEL: Record<string, string> = {
@@ -24,6 +24,7 @@ const EMPTY_FORM: FormState = { farmName: '', location: '', farmSizeHectares: ''
 
 export default function FarmProfile() {
   useDocumentTitle('Farm Profile')
+  const { theme } = useTheme()
   const { profile, loading, error, updateProfile } = useProfile()
 
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
@@ -76,23 +77,28 @@ export default function FarmProfile() {
   }
 
   if (loading) {
-    return <p className="text-ink-soft">Loading your farm profile…</p>
+    return <p className="text-app-ink-soft">Loading your farm profile…</p>
   }
 
   return (
     <div className="animate-slide-up max-w-2xl space-y-8">
       <div>
-        <h1 className="font-display text-3xl leading-tight font-medium tracking-tight text-forest-900">
+        <h1 className="font-display text-3xl leading-tight font-medium tracking-tight text-app-heading">
           Farm Profile
         </h1>
-        <p className="mt-1.5 text-ink-soft">This powers the modules being built next — keep it up to date.</p>
+        <p className="mt-1.5 text-app-ink-soft">This powers the modules being built next — keep it up to date.</p>
       </div>
 
-      {error && <Alert tone="error">{error}</Alert>}
+      {error && (
+        <Alert tone="error" surface={theme}>
+          {error}
+        </Alert>
+      )}
 
-      <form onSubmit={handleSubmit} noValidate className="space-y-5 rounded-2xl border border-bone-300/70 bg-bone-50/80 p-6 shadow-card">
+      <form onSubmit={handleSubmit} noValidate className="space-y-5 rounded-2xl border border-app-border/70 bg-app-surface/80 p-6 shadow-card">
         <TextField
           label="Farm Name"
+          tone={theme}
           value={form.farmName}
           onChange={(event) => setForm((current) => ({ ...current, farmName: event.target.value }))}
           onBlur={() => setFarmNameError(validateFarmName(form.farmName))}
@@ -105,6 +111,7 @@ export default function FarmProfile() {
         <TextField
           label="Location"
           optional
+          tone={theme}
           value={form.location}
           onChange={(event) => setForm((current) => ({ ...current, location: event.target.value }))}
           leftIcon={MapPin}
@@ -115,6 +122,7 @@ export default function FarmProfile() {
         <TextField
           label="Farm Size"
           optional
+          tone={theme}
           type="number"
           inputMode="decimal"
           min={0}
@@ -129,6 +137,7 @@ export default function FarmProfile() {
 
         <ChipInput
           label="Crop Types"
+          tone={theme}
           values={form.cropTypes}
           onChange={(cropTypes) => setForm((current) => ({ ...current, cropTypes }))}
           placeholder="Type a crop and press Enter"
@@ -136,29 +145,37 @@ export default function FarmProfile() {
           disabled={submitting}
         />
 
-        {submitError && <Alert tone="error">{submitError}</Alert>}
-        {saved && !submitError && <Alert tone="success">Your farm profile has been saved.</Alert>}
+        {submitError && (
+          <Alert tone="error" surface={theme}>
+            {submitError}
+          </Alert>
+        )}
+        {saved && !submitError && (
+          <Alert tone="success" surface={theme}>
+            Your farm profile has been saved.
+          </Alert>
+        )}
 
-        <Button type="submit" loading={submitting} loadingText="Saving…">
+        <Button type="submit" variant={theme === 'dark' ? 'gold' : 'primary'} loading={submitting} loadingText="Saving…">
           Save changes
         </Button>
       </form>
 
       {profile && (
-        <div className="rounded-2xl border border-bone-300/70 bg-bone-50/60 p-6">
-          <h2 className="text-sm font-semibold tracking-[0.08em] text-ink-soft uppercase">Account</h2>
+        <div className="rounded-2xl border border-app-border/70 bg-app-surface/60 p-6">
+          <h2 className="text-sm font-semibold tracking-[0.08em] text-app-ink-soft uppercase">Account</h2>
           <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
             <div>
-              <dt className="text-ink-soft">Email</dt>
-              <dd className="font-medium text-ink">{profile.email}</dd>
+              <dt className="text-app-ink-soft">Email</dt>
+              <dd className="font-medium text-app-ink">{profile.email}</dd>
             </div>
             <div>
-              <dt className="text-ink-soft">Role</dt>
-              <dd className="font-medium text-ink">{profile.role}</dd>
+              <dt className="text-app-ink-soft">Role</dt>
+              <dd className="font-medium text-app-ink">{profile.role}</dd>
             </div>
             <div>
-              <dt className="text-ink-soft">Signed in with</dt>
-              <dd className="font-medium text-ink">{AUTH_PROVIDER_LABEL[profile.authProvider] ?? profile.authProvider}</dd>
+              <dt className="text-app-ink-soft">Signed in with</dt>
+              <dd className="font-medium text-app-ink">{AUTH_PROVIDER_LABEL[profile.authProvider] ?? profile.authProvider}</dd>
             </div>
           </dl>
         </div>

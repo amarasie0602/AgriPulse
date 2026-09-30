@@ -4,7 +4,7 @@ import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
 import { TextField } from '@/components/ui/TextField'
-import { useDocumentTitle, useResourceEntries } from '@/hooks'
+import { useDocumentTitle, useResourceEntries, useTheme } from '@/hooks'
 import {
   RESOURCE_TYPES,
   RESOURCE_TYPE_DEFAULT_UNIT,
@@ -39,6 +39,7 @@ function emptyForm(): FormState {
 
 export default function ResourceTracking() {
   useDocumentTitle('Resource Tracking')
+  const { theme } = useTheme()
   const { entries, summary, loading, error, addEntry, removeEntry } = useResourceEntries()
 
   const [form, setForm] = useState<FormState>(emptyForm())
@@ -106,28 +107,32 @@ export default function ResourceTracking() {
   return (
     <div className="animate-slide-up space-y-8">
       <div>
-        <h1 className="font-display text-3xl leading-tight font-medium tracking-tight text-forest-900 sm:text-4xl">
+        <h1 className="font-display text-3xl leading-tight font-medium tracking-tight text-app-heading sm:text-4xl">
           Resource Tracking
         </h1>
-        <p className="mt-1.5 text-ink-soft">Log water, energy, and input usage to build a picture over time.</p>
+        <p className="mt-1.5 text-app-ink-soft">Log water, energy, and input usage to build a picture over time.</p>
       </div>
 
-      {error && <Alert tone="error">{error}</Alert>}
+      {error && (
+        <Alert tone="error" surface={theme}>
+          {error}
+        </Alert>
+      )}
 
       {summaryTypes.length > 0 && (
         <div className="grid gap-3 sm:grid-cols-3">
           {summaryTypes.map((type) => {
             const Icon = RESOURCE_TYPE_ICONS[type]
             return (
-              <div key={type} className="rounded-2xl border border-bone-300/70 bg-bone-50/70 p-4">
+              <div key={type} className="rounded-2xl border border-app-border/70 bg-app-surface/70 p-4">
                 <div className="flex items-center gap-2.5">
-                  <span className="grid size-9 place-items-center rounded-lg border border-bone-300 bg-white text-forest-700">
+                  <span className="grid size-9 place-items-center rounded-lg border border-app-border bg-app-chip text-app-link">
                     <Icon className="size-4.5" aria-hidden="true" />
                   </span>
-                  <p className="text-sm font-semibold text-ink-soft">{RESOURCE_TYPE_LABELS[type]}</p>
+                  <p className="text-sm font-semibold text-app-ink-soft">{RESOURCE_TYPE_LABELS[type]}</p>
                 </div>
-                <p className="mt-2 font-display text-2xl font-medium text-forest-900">
-                  {summary[type]} <span className="text-base font-sans font-medium text-ink-soft">total</span>
+                <p className="mt-2 font-display text-2xl font-medium text-app-heading">
+                  {summary[type]} <span className="text-base font-sans font-medium text-app-ink-soft">total</span>
                 </p>
               </div>
             )
@@ -138,10 +143,11 @@ export default function ResourceTracking() {
       <form
         onSubmit={handleSubmit}
         noValidate
-        className="grid gap-4 rounded-2xl border border-bone-300/70 bg-bone-50/80 p-6 shadow-card sm:grid-cols-2"
+        className="grid gap-4 rounded-2xl border border-app-border/70 bg-app-surface/80 p-6 shadow-card sm:grid-cols-2"
       >
         <Select
           label="Resource Type"
+          tone={theme}
           value={form.resourceType}
           onChange={(event) => handleTypeChange(event.target.value as ResourceType)}
           disabled={submitting}
@@ -155,6 +161,7 @@ export default function ResourceTracking() {
 
         <TextField
           label="Date"
+          tone={theme}
           type="date"
           leftIcon={Calendar}
           value={form.date}
@@ -165,6 +172,7 @@ export default function ResourceTracking() {
 
         <TextField
           label="Quantity"
+          tone={theme}
           type="number"
           inputMode="decimal"
           min={0}
@@ -177,6 +185,7 @@ export default function ResourceTracking() {
 
         <TextField
           label="Unit"
+          tone={theme}
           placeholder="e.g. L, kWh, kg"
           value={form.unit}
           onChange={(event) => setForm((current) => ({ ...current, unit: event.target.value }))}
@@ -186,6 +195,7 @@ export default function ResourceTracking() {
         <TextField
           label="Notes"
           optional
+          tone={theme}
           className="sm:col-span-2"
           placeholder="Optional detail, e.g. which field"
           value={form.notes}
@@ -195,13 +205,16 @@ export default function ResourceTracking() {
 
         {formError && (
           <div className="sm:col-span-2">
-            <Alert tone="error">{formError}</Alert>
+            <Alert tone="error" surface={theme}>
+              {formError}
+            </Alert>
           </div>
         )}
 
         <div className="sm:col-span-2">
           <Button
             type="submit"
+            variant={theme === 'dark' ? 'gold' : 'primary'}
             loading={submitting}
             loadingText="Adding…"
             leftIcon={!submitting ? <Plus className="size-4.5" aria-hidden="true" /> : undefined}
@@ -212,12 +225,12 @@ export default function ResourceTracking() {
       </form>
 
       <div>
-        <h2 className="mb-3 text-sm font-semibold tracking-[0.08em] text-ink-soft uppercase">Recent entries</h2>
+        <h2 className="mb-3 text-sm font-semibold tracking-[0.08em] text-app-ink-soft uppercase">Recent entries</h2>
 
         {loading ? (
-          <p className="text-ink-soft">Loading…</p>
+          <p className="text-app-ink-soft">Loading…</p>
         ) : entries.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-bone-300 p-6 text-center text-ink-soft">
+          <p className="rounded-2xl border border-dashed border-app-border p-6 text-center text-app-ink-soft">
             No entries yet — add your first one above.
           </p>
         ) : (
@@ -227,17 +240,17 @@ export default function ResourceTracking() {
               return (
                 <li
                   key={entry.id}
-                  className="flex items-center gap-3 rounded-xl border border-bone-300/70 bg-bone-50/60 p-3.5"
+                  className="flex items-center gap-3 rounded-xl border border-app-border/70 bg-app-surface/60 p-3.5"
                 >
-                  <span className="grid size-9 shrink-0 place-items-center rounded-lg border border-bone-300 bg-white text-forest-700">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-lg border border-app-border bg-app-chip text-app-link">
                     <Icon className="size-4.5" aria-hidden="true" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-ink">
+                    <p className="font-semibold text-app-ink">
                       {entry.quantity} {entry.unit}{' '}
-                      <span className="font-normal text-ink-soft">· {RESOURCE_TYPE_LABELS[entry.resourceType]}</span>
+                      <span className="font-normal text-app-ink-soft">· {RESOURCE_TYPE_LABELS[entry.resourceType]}</span>
                     </p>
-                    <p className="truncate text-sm text-ink-soft">
+                    <p className="truncate text-sm text-app-ink-soft">
                       {new Date(entry.date).toLocaleDateString(undefined, { dateStyle: 'medium' })}
                       {entry.notes ? ` · ${entry.notes}` : ''}
                     </p>
@@ -247,7 +260,7 @@ export default function ResourceTracking() {
                     onClick={() => handleRemove(entry.id)}
                     disabled={removingId === entry.id}
                     aria-label="Delete entry"
-                    className="grid size-9 shrink-0 place-items-center rounded-lg text-ink-soft transition-colors hover:bg-danger-bg hover:text-danger-text disabled:opacity-50"
+                    className="grid size-9 shrink-0 place-items-center rounded-lg text-app-ink-soft transition-colors hover:bg-app-danger-bg hover:text-app-danger-text disabled:opacity-50"
                   >
                     <Trash2 className="size-4.5" aria-hidden="true" />
                   </button>

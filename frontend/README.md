@@ -90,30 +90,43 @@ frontend/
     │   │   ├── PasswordInput.tsx    Show/hide toggle
     │   │   └── PasswordStrength.tsx
     │   ├── layout/
-    │   │   ├── ConsoleAuthShell.tsx     Dark shell shared by Login/Register
+    │   │   ├── ConsoleAuthShell.tsx     Dark shell shared by Login/Register (always dark — no toggle)
     │   │   ├── SmartFieldConsoleFrame.tsx  Ring + orbiting sample-data cards around Login
     │   │   ├── SmartFieldConsole.tsx / OrbitMetricCard.tsx / AerialFieldBackdrop.tsx / ContourLines.tsx
-    │   │   ├── DashboardShell.tsx   Signed-in frame: sidebar (desktop) / drawer (mobile) + outlet
+    │   │   ├── DashboardShell.tsx   Signed-in frame: sidebar (desktop) / drawer (mobile) + outlet + ThemeToggle
     │   │   └── SidebarNav.tsx       Nav links + "Coming soon" section, shared by both
-    │   └── ui/                      Button, TextField, Checkbox, ChipInput, Alert, Divider, Logo, …
-    │                                 (TextField/Checkbox/Alert/Divider/Button take a light/dark `tone`)
+    │   └── ui/                      Button, TextField, Select, Checkbox, ChipInput, Alert, Divider, Logo, ThemeToggle, …
+    │                                 (TextField/Select/Checkbox/Alert/Divider/Button take a light/dark `tone`/`surface`/`variant`)
     ├── pages/
     │   ├── Login.tsx / Register.tsx
-    │   ├── Dashboard.tsx            Overview
+    │   ├── Dashboard.tsx            Overview: farm summary, resource totals, upcoming modules
+    │   ├── ResourceTracking.tsx     Log + list water/energy/input usage, per-type totals
     │   └── FarmProfile.tsx          Edit farm name, location, size, crop types
-    ├── context/AuthContext.tsx      user, token, login, register, loginWithGoogle, logout, isAuthenticated, loading, hasRole
-    ├── hooks/                       useAuth, useProfile, useForm, useDocumentTitle, useElementWidth
+    ├── context/
+    │   ├── AuthContext.tsx           user, token, login, register, loginWithGoogle, logout, isAuthenticated, loading, hasRole
+    │   └── ThemeContext.tsx          theme ('light'|'dark'), setTheme, toggleTheme — persisted, follows system until chosen
+    ├── hooks/                       useAuth, useTheme, useProfile, useResourceEntries, useForm, useDocumentTitle, useElementWidth
     ├── routes/                      ProtectedRoute, PublicOnlyRoute
     ├── config/google.ts             isGoogleAuthEnabled, googleClientId (from VITE_GOOGLE_CLIENT_ID)
     ├── services/
     │   ├── api.ts                   Axios instance + interceptors
     │   ├── authService.ts           /auth/login, /auth/register, /auth/google
     │   ├── profileService.ts        GET/PATCH /users/me (real + offline demo)
+    │   ├── resourceService.ts       /resources, /resources/summary (real + offline demo)
     │   ├── errors.ts                HTTP status → friendly message
     │   └── tokenStorage.ts          Session persistence
-    ├── types/                       Auth, navigation and farm profile types
+    ├── types/                       Auth, navigation, farm profile and resource entry types
     └── utils/                       validators, jwt (decode + expiry), cn
 ```
+
+## Light / dark mode
+
+The signed-in dashboard (Overview, Resource Tracking, Farm Profile — everything inside `DashboardShell`) supports light and dark mode via a toggle in the sidebar (desktop) or top bar (mobile). The always-dark Login/Register console is untouched by this — it has no toggle and isn't affected by the choice.
+
+- **Default:** follows the OS `prefers-color-scheme`, live, until the user picks explicitly.
+- **Persisted:** an explicit choice is saved to `localStorage` (`agripulse.theme`) and applied on every future visit.
+- **No flash:** a small inline script in `index.html` sets `<html data-theme="...">` before React mounts.
+- **How it works:** `index.css` defines a small set of `--color-app-*` CSS tokens (background, surface, border, text, accent, …) with light values in `@theme` and dark overrides under `:root[data-theme="dark"]`. Dashboard-area components use `bg-app-surface`, `text-app-heading`, etc. instead of literal palette colors, so they repaint automatically — no per-component dark-mode logic needed beyond passing `tone={theme}` (or `variant={theme === 'dark' ? 'gold' : 'primary'}` for CTAs) to the shared `ui/` atoms, reusing the same dark styling already built for the login console.
 
 ## How authentication works
 

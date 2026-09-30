@@ -16,6 +16,21 @@
       rel="stylesheet"
     />
     <title>AgriPulse — Smart Farm Sustainability</title>
+    <script>
+      // Applied before first paint so the dashboard never flashes the wrong
+      // theme. Kept in sync with context/ThemeContext.tsx.
+      (function () {
+        try {
+          var stored = localStorage.getItem('agripulse.theme');
+          var theme = stored === 'light' || stored === 'dark'
+            ? stored
+            : window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch (error) {
+          // Storage unavailable (private mode, etc.) — default light stays.
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

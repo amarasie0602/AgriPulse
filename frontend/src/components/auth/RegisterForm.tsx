@@ -91,17 +91,17 @@ export function RegisterForm() {
   }
 
   return (
-    <div className="w-full max-w-[26rem] rounded-[2rem] border border-white/12 bg-forest-900/55 p-7 shadow-glass backdrop-blur-2xl sm:p-8">
-      <div className="mb-6">
-        <h1 className="font-display text-[1.75rem] leading-tight font-medium tracking-tight text-bone-50">
+    <div className="w-full max-w-[26rem] rounded-[2rem] border border-white/12 bg-forest-900/55 p-6 shadow-glass backdrop-blur-2xl sm:p-7">
+      <div className="mb-4">
+        <h1 className="font-display text-[1.6rem] leading-tight font-medium tracking-tight text-bone-50">
           Create your account
         </h1>
-        <p className="mt-1.5 text-[0.9rem] text-moss-200/85">Start understanding your farm's sustainability</p>
+        <p className="mt-1 text-[0.9rem] text-moss-200/85">Start understanding your farm's sustainability</p>
       </div>
 
       {isMockAuthEnabled && <DemoModeNotice surface="dark" />}
 
-      <form ref={formRef} onSubmit={handleSubmit} noValidate className="space-y-4">
+      <form ref={formRef} onSubmit={handleSubmit} noValidate className="space-y-3">
         <TextField
           {...getFieldProps('name')}
           label="Full Name"
@@ -181,7 +181,7 @@ export function RegisterForm() {
         )}
       </form>
 
-      <div className="my-5">
+      <div className="my-4">
         <Divider label="OR" tone="dark" />
       </div>
 
@@ -193,7 +193,7 @@ export function RegisterForm() {
         onError={(message) => setSubmitError(message)}
       />
 
-      <p className="mt-6 text-center text-sm text-moss-200/85">
+      <p className="mt-4 text-center text-sm text-moss-200/85">
         Already have an account?{' '}
         <Link
           to="/login"

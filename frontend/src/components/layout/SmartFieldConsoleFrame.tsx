@@ -13,7 +13,7 @@ import { SmartFieldConsole } from './SmartFieldConsole'
 export function SmartFieldConsoleFrame({ children }: { children: ReactNode }) {
   return (
     <div className="relative flex w-full items-center justify-center">
-      <SmartFieldConsole className="pointer-events-none absolute hidden size-[560px] lg:block xl:size-[640px]" />
+      <SmartFieldConsole className="pointer-events-none absolute hidden size-[min(50vh,36vw,600px)] lg:block" />
 
       <OrbitMetricCard
         icon={Leaf}

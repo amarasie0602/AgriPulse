@@ -4,6 +4,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import { AuthProvider } from './context/AuthContext'
+import { ThemeProvider } from './context/ThemeContext'
 import { googleClientId, isGoogleAuthEnabled } from './config/google'
 import './index.css'
 
@@ -15,12 +16,14 @@ function GoogleProvider({ children }: { children: ReactNode }) {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter>
-      <GoogleProvider>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      </GoogleProvider>
-    </BrowserRouter>
+    <ThemeProvider>
+      <BrowserRouter>
+        <GoogleProvider>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        </GoogleProvider>
+      </BrowserRouter>
+    </ThemeProvider>
   </StrictMode>,
 )
