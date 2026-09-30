@@ -4,13 +4,9 @@ import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
 import { useAuth, useDocumentTitle, useProfile, useResourceEntries, useTheme } from '@/hooks'
 import { RESOURCE_TYPE_LABELS } from '@/types'
+import { estimateCarbon, formatCo2e } from '@/utils/carbon'
 
 const UPCOMING_MODULES = [
-  {
-    icon: Sprout,
-    title: 'Carbon Calculator',
-    description: 'Estimate the CO₂e impact of your farm activities and inputs.',
-  },
   {
     icon: BarChart3,
     title: 'Analytics',
@@ -22,13 +18,14 @@ export default function Dashboard() {
   const { user } = useAuth()
   const { theme } = useTheme()
   const { profile, loading, error } = useProfile()
-  const { summary, loading: resourcesLoading } = useResourceEntries()
+  const { entries, summary, loading: resourcesLoading } = useResourceEntries()
   const navigate = useNavigate()
   useDocumentTitle('Dashboard')
 
   const firstName = user?.name?.trim().split(' ')[0] || 'there'
   const profileIncomplete = !loading && profile && (!profile.farmName || !profile.location || !profile.farmSizeHectares)
   const summaryEntries = Object.entries(summary) as [keyof typeof RESOURCE_TYPE_LABELS, number][]
+  const carbonEstimate = estimateCarbon(entries)
 
   return (
     <div className="animate-slide-up space-y-8">
@@ -125,6 +122,37 @@ export default function Dashboard() {
                 <p className="mt-1 font-display text-xl font-medium text-app-heading">{total} total</p>
               </div>
             ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold tracking-[0.08em] text-app-ink-soft uppercase">Carbon impact</h2>
+          <Link
+            to="/carbon"
+            className="flex items-center gap-1 text-sm font-semibold text-app-link underline-offset-4 hover:text-app-heading hover:underline"
+          >
+            {carbonEstimate.hasData ? 'View calculator' : 'Estimate it'}
+            <ArrowRight className="size-3.5" aria-hidden="true" />
+          </Link>
+        </div>
+
+        {resourcesLoading ? (
+          <p className="text-app-ink-soft">Loading…</p>
+        ) : !carbonEstimate.hasData ? (
+          <div className="flex items-center gap-3 rounded-2xl border border-dashed border-app-border p-5">
+            <Sprout className="size-5 shrink-0 text-app-link" aria-hidden="true" />
+            <p className="text-app-ink-soft">
+              Log fuel, energy, fertilizer or pesticide usage to see an estimated CO₂e footprint.
+            </p>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-app-border/70 bg-app-surface/70 p-4">
+            <p className="text-sm font-semibold text-app-ink-soft">Estimated total</p>
+            <p className="mt-1 font-display text-xl font-medium text-app-heading">
+              {formatCo2e(carbonEstimate.totalCo2eKg)}
+            </p>
           </div>
         )}
       </div>
