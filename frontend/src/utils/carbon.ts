@@ -26,6 +26,14 @@ export const EMISSION_FACTORS: EmissionFactor[] = [
 
 export const CARBON_EXCLUDED_TYPES: ResourceType[] = ['WATER', 'OTHER']
 
+/** Fixed, theme-independent colors for each carbon-relevant type — used by donut/pie charts and legends. */
+export const CARBON_TYPE_COLORS: Record<'FUEL' | 'ENERGY' | 'FERTILIZER' | 'PESTICIDE', string> = {
+  FUEL: '#c2693c',
+  ENERGY: '#e0a83e',
+  FERTILIZER: '#5b9c5f',
+  PESTICIDE: '#4a8a93',
+}
+
 export interface CarbonBreakdownRow {
   type: ResourceType
   label: string

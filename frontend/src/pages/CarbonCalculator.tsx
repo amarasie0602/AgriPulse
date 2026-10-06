@@ -1,9 +1,10 @@
 import { Bug, Droplets, Fuel, Info, Package, Sprout, Zap, type LucideIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Alert } from '@/components/ui/Alert'
+import { DonutChart } from '@/components/ui/DonutChart'
 import { useDocumentTitle, useResourceEntries, useTheme } from '@/hooks'
 import type { ResourceType } from '@/types'
-import { estimateCarbon, formatCo2e } from '@/utils/carbon'
+import { CARBON_TYPE_COLORS, estimateCarbon, formatCo2e } from '@/utils/carbon'
 
 const RESOURCE_TYPE_ICONS: Record<ResourceType, LucideIcon> = {
   WATER: Droplets,
@@ -23,7 +24,7 @@ export default function CarbonCalculator() {
   const countedRows = estimate.rows.filter((row) => row.matchedQuantity > 0)
 
   return (
-    <div className="animate-slide-up max-w-3xl space-y-8">
+    <div className="animate-slide-up max-w-3xl space-y-5">
       <div>
         <h1 className="font-display text-3xl leading-tight font-medium tracking-tight text-app-heading sm:text-4xl">
           Carbon Calculator
@@ -39,9 +40,9 @@ export default function CarbonCalculator() {
         </Alert>
       )}
 
-      <Alert tone="info" surface={theme}>
-        These figures use standard, illustrative emission factors — a helpful guide, not a certified
-        calculation. Water and other/uncategorized usage aren't counted toward the total below.
+      <Alert tone="info" surface={theme} className="text-sm">
+        Illustrative emission factors, not a certified calculation. Water and other/uncategorized usage aren't
+        counted toward the total.
       </Alert>
 
       {loading ? (
@@ -58,52 +59,51 @@ export default function CarbonCalculator() {
         </div>
       ) : (
         <>
-          <div className="rounded-2xl border border-app-border/70 bg-app-surface/80 p-6 shadow-card">
-            <p className="text-sm font-semibold tracking-[0.08em] text-app-ink-soft uppercase">
-              Estimated impact
-            </p>
-            <p className="mt-2 font-display text-4xl font-medium text-app-heading sm:text-5xl">
-              {formatCo2e(estimate.totalCo2eKg)}
-            </p>
-            <p className="mt-1 text-sm text-app-ink-soft">{estimate.totalCo2eKg.toFixed(1)} kg CO₂e total</p>
-          </div>
-
           {countedRows.length > 0 ? (
-            <div>
-              <h2 className="mb-3 text-sm font-semibold tracking-[0.08em] text-app-ink-soft uppercase">Breakdown</h2>
-              <ul className="flex flex-col gap-2">
-                {countedRows.map((row) => {
-                  const Icon = RESOURCE_TYPE_ICONS[row.type]
-                  return (
-                    <li
-                      key={row.type}
-                      className="flex items-center gap-3 rounded-xl border border-app-border/70 bg-app-surface/60 p-3.5"
-                    >
-                      <span className="grid size-9 shrink-0 place-items-center rounded-lg border border-app-border bg-app-chip text-app-link">
-                        <Icon className="size-4.5" aria-hidden="true" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-semibold text-app-ink">
-                          {row.label}{' '}
-                          <span className="font-normal text-app-ink-soft">
-                            · {row.matchedQuantity} {row.unit} × {row.factorKgCo2ePerUnit} kg CO₂e/{row.unit}
-                          </span>
+            <div className="rounded-2xl border border-app-border/70 bg-app-surface/80 p-5 shadow-card sm:p-6">
+              <p className="text-sm font-semibold tracking-[0.08em] text-app-ink-soft uppercase">Estimated impact</p>
+              <div className="mt-3 flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:gap-6">
+                <DonutChart
+                  segments={countedRows.map((row) => ({
+                    label: row.label,
+                    value: row.co2eKg,
+                    color: CARBON_TYPE_COLORS[row.type as keyof typeof CARBON_TYPE_COLORS],
+                  }))}
+                  centerValue={formatCo2e(estimate.totalCo2eKg)}
+                  centerCaption="total"
+                  tone={theme}
+                  className="shrink-0"
+                />
+                <ul className="flex w-full min-w-0 flex-col gap-2">
+                  {countedRows.map((row) => {
+                    const Icon = RESOURCE_TYPE_ICONS[row.type]
+                    const percent = estimate.totalCo2eKg > 0 ? (row.co2eKg / estimate.totalCo2eKg) * 100 : 0
+                    return (
+                      <li key={row.type} className="flex items-center gap-2.5">
+                        <span
+                          className="grid size-7 shrink-0 place-items-center rounded-lg text-white"
+                          style={{ backgroundColor: CARBON_TYPE_COLORS[row.type as keyof typeof CARBON_TYPE_COLORS] }}
+                        >
+                          <Icon className="size-3.5" aria-hidden="true" />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-app-ink">{row.label}</p>
+                          {row.unmatchedEntryCount > 0 && (
+                            <p className="flex items-center gap-1 text-xs text-app-ink-soft">
+                              <Info className="size-3 shrink-0" aria-hidden="true" />
+                              {row.unmatchedEntryCount} not counted
+                            </p>
+                          )}
+                        </div>
+                        <p className="shrink-0 text-right font-display text-sm font-medium text-app-heading">
+                          {row.co2eKg.toFixed(1)} kg
+                          <span className="ml-1.5 text-xs font-normal text-app-ink-soft">{percent.toFixed(0)}%</span>
                         </p>
-                        {row.unmatchedEntryCount > 0 && (
-                          <p className="flex items-center gap-1 text-sm text-app-ink-soft">
-                            <Info className="size-3.5 shrink-0" aria-hidden="true" />
-                            {row.unmatchedEntryCount} {row.unmatchedEntryCount === 1 ? 'entry' : 'entries'} logged in
-                            a different unit, not counted
-                          </p>
-                        )}
-                      </div>
-                      <p className="shrink-0 font-display text-lg font-medium text-app-heading">
-                        {row.co2eKg.toFixed(1)} <span className="font-sans text-sm font-medium">kg</span>
-                      </p>
-                    </li>
-                  )
-                })}
-              </ul>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
             </div>
           ) : (
             <Alert tone="info" surface={theme}>
