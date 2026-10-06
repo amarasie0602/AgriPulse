@@ -1,18 +1,12 @@
-import { ArrowRight, BarChart3, CircleAlert, Droplets, MapPin, Sprout } from 'lucide-react'
+import { ArrowRight, CircleAlert, Droplets, MapPin, Sprout } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
+import { Sparkline } from '@/components/ui/TrendChart'
 import { useAuth, useDocumentTitle, useProfile, useResourceEntries, useTheme } from '@/hooks'
 import { RESOURCE_TYPE_LABELS } from '@/types'
+import { monthlyCarbonTrend } from '@/utils/analytics'
 import { estimateCarbon, formatCo2e } from '@/utils/carbon'
-
-const UPCOMING_MODULES = [
-  {
-    icon: BarChart3,
-    title: 'Analytics',
-    description: 'Trends and comparisons across your resource and impact data.',
-  },
-]
 
 export default function Dashboard() {
   const { user } = useAuth()
@@ -26,6 +20,8 @@ export default function Dashboard() {
   const profileIncomplete = !loading && profile && (!profile.farmName || !profile.location || !profile.farmSizeHectares)
   const summaryEntries = Object.entries(summary) as [keyof typeof RESOURCE_TYPE_LABELS, number][]
   const carbonEstimate = estimateCarbon(entries)
+  const carbonTrend = monthlyCarbonTrend(entries)
+  const hasTrendData = carbonTrend.some((point) => point.value > 0)
 
   return (
     <div className="animate-slide-up space-y-8">
@@ -158,24 +154,30 @@ export default function Dashboard() {
       </div>
 
       <div>
-        <h2 className="mb-3 text-sm font-semibold tracking-[0.08em] text-app-ink-soft uppercase">Coming to your workspace</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          {UPCOMING_MODULES.map(({ icon: Icon, title, description }) => (
-            <div
-              key={title}
-              className="rounded-2xl border border-app-border/70 bg-app-surface/60 p-5 text-left"
-            >
-              <span className="grid size-10 place-items-center rounded-xl border border-app-border bg-app-chip text-app-link">
-                <Icon className="size-5" aria-hidden="true" />
-              </span>
-              <p className="mt-3 font-semibold text-app-heading">{title}</p>
-              <p className="mt-1 text-sm text-app-ink-soft">{description}</p>
-              <span className="mt-3 inline-block rounded-full border border-app-border bg-app-bg px-2 py-0.5 text-[0.65rem] font-semibold tracking-wide text-app-ink-soft uppercase">
-                Coming soon
-              </span>
-            </div>
-          ))}
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold tracking-[0.08em] text-app-ink-soft uppercase">Trends</h2>
+          <Link
+            to="/analytics"
+            className="flex items-center gap-1 text-sm font-semibold text-app-link underline-offset-4 hover:text-app-heading hover:underline"
+          >
+            View analytics
+            <ArrowRight className="size-3.5" aria-hidden="true" />
+          </Link>
         </div>
+
+        {resourcesLoading ? (
+          <p className="text-app-ink-soft">Loading…</p>
+        ) : !hasTrendData ? (
+          <div className="flex items-center gap-3 rounded-2xl border border-dashed border-app-border p-5">
+            <Droplets className="size-5 shrink-0 text-app-link" aria-hidden="true" />
+            <p className="text-app-ink-soft">Trends build up once you've logged usage across more than one month.</p>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-app-border/70 bg-app-surface/70 p-4">
+            <p className="text-sm font-semibold text-app-ink-soft">Carbon impact, by month</p>
+            <Sparkline points={carbonTrend} tone={theme} unit="kg CO₂e" className="mt-2" />
+          </div>
+        )}
       </div>
     </div>
   )
