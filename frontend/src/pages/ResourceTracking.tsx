@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Bug, Calendar, Droplets, Fuel, Package, Plus, Sprout, Trash2, Zap, type LucideIcon } from 'lucide-react'
 import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { Select } from '@/components/ui/Select'
 import { TextField } from '@/components/ui/TextField'
 import { useDocumentTitle, useResourceEntries, useTheme } from '@/hooks'
@@ -236,9 +237,13 @@ export default function ResourceTracking() {
         {loading ? (
           <p className="text-app-ink-soft">Loading…</p>
         ) : entries.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-app-border p-6 text-center text-app-ink-soft">
-            No entries yet — add your first one above.
-          </p>
+          <EmptyState
+            icon={Droplets}
+            color={RESOURCE_TYPE_COLORS.WATER}
+            title="No entries yet"
+            description="Add your first one above to start building your usage log."
+            className="sm:justify-center sm:text-center"
+          />
         ) : (
           <ul className="flex flex-col gap-2">
             {entries.map((entry) => {

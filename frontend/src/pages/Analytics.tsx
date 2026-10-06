@@ -2,6 +2,7 @@ import { BarChart3, Bug, Droplets, Fuel, Info, Package, Sprout, Zap, type Lucide
 import { Link } from 'react-router-dom'
 import { Alert } from '@/components/ui/Alert'
 import { DonutChart } from '@/components/ui/DonutChart'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { Sparkline, TrendChart } from '@/components/ui/TrendChart'
 import { useDocumentTitle, useResourceEntries, useTheme } from '@/hooks'
 import type { ResourceType } from '@/types'
@@ -47,18 +48,20 @@ export default function Analytics() {
       {loading ? (
         <p className="text-app-ink-soft">Loading…</p>
       ) : entries.length === 0 ? (
-        <div className="flex flex-col items-start gap-3 rounded-2xl border border-dashed border-app-border p-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <BarChart3 className="size-5 shrink-0 text-app-link" aria-hidden="true" />
-            <p className="text-app-ink-soft">Log some resource usage first — trends build up as entries come in.</p>
-          </div>
-          <Link
-            to="/resources"
-            className="shrink-0 rounded text-sm font-semibold text-app-link underline-offset-4 hover:text-app-heading hover:underline"
-          >
-            Go to Resource Tracking
-          </Link>
-        </div>
+        <EmptyState
+          icon={BarChart3}
+          color={RESOURCE_TYPE_COLORS.ENERGY}
+          title="No trends yet"
+          description="Log some resource usage first — trends build up as entries come in."
+          action={
+            <Link
+              to="/resources"
+              className="shrink-0 rounded text-sm font-semibold text-app-link underline-offset-4 hover:text-app-heading hover:underline"
+            >
+              Go to Resource Tracking
+            </Link>
+          }
+        />
       ) : (
         <>
           <div className="grid gap-4 lg:grid-cols-5">

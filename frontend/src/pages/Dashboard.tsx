@@ -1,7 +1,22 @@
-import { ArrowRight, Bug, CircleAlert, Droplets, Fuel, MapPin, Package, Sprout, Zap, type LucideIcon } from 'lucide-react'
+import {
+  ArrowRight,
+  Bug,
+  CircleAlert,
+  Droplets,
+  Fuel,
+  Leaf,
+  MapPin,
+  Package,
+  Sprout,
+  TrendingUp,
+  Zap,
+  type LucideIcon,
+} from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
+import { ContourLines } from '@/components/layout/ContourLines'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { Sparkline } from '@/components/ui/TrendChart'
 import { useAuth, useDocumentTitle, useProfile, useResourceEntries, useTheme } from '@/hooks'
 import { RESOURCE_TYPE_LABELS, type ResourceType } from '@/types'
@@ -46,6 +61,15 @@ export default function Dashboard() {
           }}
           aria-hidden="true"
         />
+        <ContourLines className="pointer-events-none absolute inset-0 size-full opacity-60" />
+        <div
+          className="pointer-events-none absolute -top-6 -right-6 flex rotate-6 items-center gap-3 opacity-[0.08] sm:-top-4 sm:-right-4"
+          aria-hidden="true"
+        >
+          <Leaf className="size-20 text-app-heading sm:size-24" />
+          <Droplets className="size-16 -translate-y-4 text-app-heading sm:size-20" />
+          <Sprout className="size-14 translate-y-3 text-app-heading sm:size-16" />
+        </div>
         <div className="relative">
           <h1 className="font-display text-3xl leading-tight font-medium tracking-tight text-app-heading sm:text-4xl">
             Welcome back, {firstName}
@@ -128,10 +152,12 @@ export default function Dashboard() {
         {resourcesLoading ? (
           <p className="text-app-ink-soft">Loading…</p>
         ) : summaryEntries.length === 0 ? (
-          <div className="flex items-center gap-3 rounded-2xl border border-dashed border-app-border p-5">
-            <Droplets className="size-5 shrink-0 text-app-link" aria-hidden="true" />
-            <p className="text-app-ink-soft">No usage logged yet — start tracking water, energy, or other inputs.</p>
-          </div>
+          <EmptyState
+            icon={Droplets}
+            color={RESOURCE_TYPE_COLORS.WATER}
+            title="No usage logged yet"
+            description="Start tracking water, energy, or other inputs to see them here."
+          />
         ) : (
           <div className="grid gap-3 sm:grid-cols-3">
             {summaryEntries.map(([type, total]) => {
@@ -175,12 +201,12 @@ export default function Dashboard() {
         {resourcesLoading ? (
           <p className="text-app-ink-soft">Loading…</p>
         ) : !carbonEstimate.hasData ? (
-          <div className="flex items-center gap-3 rounded-2xl border border-dashed border-app-border p-5">
-            <Sprout className="size-5 shrink-0 text-app-link" aria-hidden="true" />
-            <p className="text-app-ink-soft">
-              Log fuel, energy, fertilizer or pesticide usage to see an estimated CO₂e footprint.
-            </p>
-          </div>
+          <EmptyState
+            icon={Sprout}
+            color={RESOURCE_TYPE_COLORS.FERTILIZER}
+            title="No carbon estimate yet"
+            description="Log fuel, energy, fertilizer or pesticide usage to see an estimated CO₂e footprint."
+          />
         ) : (
           <div className="rounded-2xl border border-app-border/70 border-l-[3px] border-l-clay-500 bg-app-surface/70 p-4 shadow-card transition-transform hover:-translate-y-0.5">
             <p className="text-sm font-semibold text-app-ink-soft">Estimated total</p>
@@ -206,10 +232,12 @@ export default function Dashboard() {
         {resourcesLoading ? (
           <p className="text-app-ink-soft">Loading…</p>
         ) : !hasTrendData ? (
-          <div className="flex items-center gap-3 rounded-2xl border border-dashed border-app-border p-5">
-            <Droplets className="size-5 shrink-0 text-app-link" aria-hidden="true" />
-            <p className="text-app-ink-soft">Trends build up once you've logged usage across more than one month.</p>
-          </div>
+          <EmptyState
+            icon={TrendingUp}
+            color={RESOURCE_TYPE_COLORS.ENERGY}
+            title="No trends yet"
+            description="Trends build up once you've logged usage across more than one month."
+          />
         ) : (
           <div className="rounded-2xl border border-app-border/70 border-l-[3px] border-l-wheat-500 bg-app-surface/70 p-4 shadow-card transition-transform hover:-translate-y-0.5">
             <p className="text-sm font-semibold text-app-ink-soft">Carbon impact, by month</p>

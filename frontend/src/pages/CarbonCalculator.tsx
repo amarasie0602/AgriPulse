@@ -1,7 +1,8 @@
-import { Bug, Droplets, Fuel, Info, Package, Sprout, Zap, type LucideIcon } from 'lucide-react'
+import { Bug, Droplets, Fuel, Info, Leaf, Package, Sprout, Zap, type LucideIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Alert } from '@/components/ui/Alert'
 import { DonutChart } from '@/components/ui/DonutChart'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { useDocumentTitle, useResourceEntries, useTheme } from '@/hooks'
 import type { ResourceType } from '@/types'
 import { CARBON_TYPE_COLORS, estimateCarbon, formatCo2e } from '@/utils/carbon'
@@ -48,15 +49,20 @@ export default function CarbonCalculator() {
       {loading ? (
         <p className="text-app-ink-soft">Loading…</p>
       ) : entries.length === 0 ? (
-        <div className="flex flex-col items-start gap-3 rounded-2xl border border-dashed border-app-border p-6 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-app-ink-soft">Log some resource usage first — fuel, energy or fertilizer entries feed this estimate.</p>
-          <Link
-            to="/resources"
-            className="shrink-0 rounded text-sm font-semibold text-app-link underline-offset-4 hover:text-app-heading hover:underline"
-          >
-            Go to Resource Tracking
-          </Link>
-        </div>
+        <EmptyState
+          icon={Leaf}
+          color={CARBON_TYPE_COLORS.FERTILIZER}
+          title="No estimate yet"
+          description="Log some resource usage first — fuel, energy or fertilizer entries feed this estimate."
+          action={
+            <Link
+              to="/resources"
+              className="shrink-0 rounded text-sm font-semibold text-app-link underline-offset-4 hover:text-app-heading hover:underline"
+            >
+              Go to Resource Tracking
+            </Link>
+          }
+        />
       ) : (
         <>
           {countedRows.length > 0 ? (
