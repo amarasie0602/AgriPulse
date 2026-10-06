@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { DashboardShell } from '@/components/layout'
+import Analytics from '@/pages/Analytics'
 import CarbonCalculator from '@/pages/CarbonCalculator'
 import Dashboard from '@/pages/Dashboard'
 import FarmProfile from '@/pages/FarmProfile'
@@ -21,6 +22,7 @@ export default function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/resources" element={<ResourceTracking />} />
           <Route path="/carbon" element={<CarbonCalculator />} />
+          <Route path="/analytics" element={<Analytics />} />
           <Route path="/profile" element={<FarmProfile />} />
         </Route>
       </Route>
