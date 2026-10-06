@@ -1,28 +1,18 @@
-import {
-  ArrowRight,
-  Bug,
-  CircleAlert,
-  Droplets,
-  Fuel,
-  Leaf,
-  MapPin,
-  Package,
-  Sprout,
-  TrendingUp,
-  Zap,
-  type LucideIcon,
-} from 'lucide-react'
+import { ArrowRight, Bug, CircleAlert, Droplets, Fuel, MapPin, Package, Sprout, TrendingUp, Zap, type LucideIcon } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
-import { ContourLines } from '@/components/layout/ContourLines'
+import { AerialFieldBackdrop } from '@/components/layout/AerialFieldBackdrop'
+import { FarmSnapshot } from '@/components/layout/FarmSnapshot'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { ProgressRing } from '@/components/ui/ProgressRing'
 import { Sparkline } from '@/components/ui/TrendChart'
 import { useAuth, useDocumentTitle, useProfile, useResourceEntries, useTheme } from '@/hooks'
 import { RESOURCE_TYPE_LABELS, type ResourceType } from '@/types'
 import { monthlyCarbonTrend } from '@/utils/analytics'
 import { estimateCarbon, formatCo2e } from '@/utils/carbon'
 import { RESOURCE_TYPE_COLORS } from '@/utils/resourceColors'
+import { estimateSustainabilityScore } from '@/utils/sustainability'
 
 const RESOURCE_TYPE_ICONS: Record<ResourceType, LucideIcon> = {
   WATER: Droplets,
@@ -31,6 +21,20 @@ const RESOURCE_TYPE_ICONS: Record<ResourceType, LucideIcon> = {
   PESTICIDE: Bug,
   FUEL: Fuel,
   OTHER: Package,
+}
+
+function timeGreeting(): string {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'Good morning'
+  if (hour < 18) return 'Good afternoon'
+  return 'Good evening'
+}
+
+/** Green/amber/red, matching the rest of the app's health-status convention. */
+function scoreGradient(score: number): [string, string] {
+  if (score >= 70) return ['#3b7a60', '#8fae86']
+  if (score >= 40) return ['#c99a4b', '#e0a83e']
+  return ['#9f3a3a', '#c2504a']
 }
 
 export default function Dashboard() {
@@ -47,36 +51,46 @@ export default function Dashboard() {
   const carbonEstimate = estimateCarbon(entries)
   const carbonTrend = monthlyCarbonTrend(entries)
   const hasTrendData = carbonTrend.some((point) => point.value > 0)
+  const sustainability = estimateSustainabilityScore(carbonTrend)
+  const changeLabel =
+    sustainability.changePercent === null
+      ? 'Log usage across two months to see a trend.'
+      : `${sustainability.changePercent <= 0 ? '↓' : '↑'} ${Math.abs(sustainability.changePercent).toFixed(1)}% carbon footprint vs last month`
 
   return (
     <div className="animate-slide-up space-y-8">
-      <div className="relative overflow-hidden rounded-2xl border border-app-border/70 bg-app-surface/80 p-6 shadow-card sm:p-7">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-90"
-          style={{
-            background:
-              theme === 'dark'
-                ? 'radial-gradient(120% 140% at 0% 0%, rgba(224,168,62,0.16), transparent 55%), radial-gradient(120% 140% at 100% 100%, rgba(91,156,95,0.14), transparent 55%)'
-                : 'radial-gradient(120% 140% at 0% 0%, rgba(224,168,62,0.14), transparent 55%), radial-gradient(120% 140% at 100% 100%, rgba(91,156,95,0.12), transparent 55%)',
-          }}
-          aria-hidden="true"
-        />
-        <ContourLines className="pointer-events-none absolute inset-0 size-full opacity-60" />
-        <div
-          className="pointer-events-none absolute -top-6 -right-6 flex rotate-6 items-center gap-3 opacity-[0.08] sm:-top-4 sm:-right-4"
-          aria-hidden="true"
-        >
-          <Leaf className="size-20 text-app-heading sm:size-24" />
-          <Droplets className="size-16 -translate-y-4 text-app-heading sm:size-20" />
-          <Sprout className="size-14 translate-y-3 text-app-heading sm:size-16" />
-        </div>
-        <div className="relative">
-          <h1 className="font-display text-3xl leading-tight font-medium tracking-tight text-app-heading sm:text-4xl">
-            Welcome back, {firstName}
+      <div className="relative overflow-hidden rounded-2xl border border-forest-700/60 shadow-card">
+        <AerialFieldBackdrop className="absolute inset-0 size-full" />
+        <div className="relative p-6 sm:p-8">
+          <p className="text-sm font-medium text-moss-300">{timeGreeting()}</p>
+          <h1 className="mt-1 font-display text-3xl leading-tight font-medium tracking-tight text-bone-50 sm:text-4xl">
+            {profile?.farmName || `${firstName}'s farm`}
           </h1>
-          <p className="mt-1.5 text-app-ink-soft">
-            {profile?.farmName ? profile.farmName : 'Your sustainability workspace is being prepared.'}
-          </p>
+          {profile?.location && (
+            <p className="mt-1.5 flex items-center gap-1.5 text-sm text-moss-300">
+              <MapPin className="size-4 shrink-0" aria-hidden="true" />
+              {profile.location}
+              {profile.farmSizeHectares ? ` · ${profile.farmSizeHectares} ha` : ''}
+            </p>
+          )}
+
+          <div className="mt-7 flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:gap-7">
+            <ProgressRing
+              value={sustainability.score}
+              gradient={scoreGradient(sustainability.score)}
+              label="Sustainability score"
+              caption="/ 100"
+            />
+            <div>
+              <p className="text-xs font-semibold tracking-[0.08em] text-moss-300 uppercase">Sustainability score</p>
+              <p className="mt-1 text-sm text-bone-100/85">{changeLabel}</p>
+              <p className="mt-1 text-xs text-moss-300/70">Illustrative, based on your carbon footprint trend</p>
+            </div>
+          </div>
+
+          {!loading && profile && profile.cropTypes.length > 0 && (
+            <FarmSnapshot cropTypes={profile.cropTypes} farmSizeHectares={profile.farmSizeHectares} className="mt-7" />
+          )}
         </div>
       </div>
 
@@ -104,36 +118,6 @@ export default function Dashboard() {
           >
             Complete profile
           </Button>
-        </div>
-      )}
-
-      {!loading && profile && !profileIncomplete && (
-        <div className="rounded-2xl border border-app-border/70 bg-app-surface/80 p-5 shadow-card">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="font-display text-xl font-medium text-app-heading">{profile.farmName}</p>
-              <p className="mt-1 flex items-center gap-1.5 text-sm text-app-ink-soft">
-                <MapPin className="size-4" aria-hidden="true" />
-                {profile.location}
-                {profile.farmSizeHectares ? ` · ${profile.farmSizeHectares} ha` : ''}
-              </p>
-            </div>
-            <Link
-              to="/profile"
-              className="rounded text-sm font-semibold text-app-link underline-offset-4 hover:text-app-heading hover:underline"
-            >
-              Edit profile
-            </Link>
-          </div>
-          {profile.cropTypes.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {profile.cropTypes.map((crop) => (
-                <span key={crop} className="rounded-full bg-app-accent/8 px-2.5 py-1 text-xs font-medium text-app-heading">
-                  {crop}
-                </span>
-              ))}
-            </div>
-          )}
         </div>
       )}
 

@@ -1,10 +1,12 @@
 import { Bug, Droplets, Fuel, Info, Leaf, Package, Sprout, Zap, type LucideIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Alert } from '@/components/ui/Alert'
+import { ContourLines } from '@/components/layout/ContourLines'
 import { DonutChart } from '@/components/ui/DonutChart'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { useDocumentTitle, useResourceEntries, useTheme } from '@/hooks'
 import type { ResourceType } from '@/types'
+import { monthOverMonthChange, monthlyCarbonTrend } from '@/utils/analytics'
 import { CARBON_TYPE_COLORS, estimateCarbon, formatCo2e } from '@/utils/carbon'
 
 const RESOURCE_TYPE_ICONS: Record<ResourceType, LucideIcon> = {
@@ -16,6 +18,12 @@ const RESOURCE_TYPE_ICONS: Record<ResourceType, LucideIcon> = {
   OTHER: Package,
 }
 
+/** Evenly-spaced points around a circle of the given radius, starting at the top. */
+function orbitPosition(index: number, count: number, radius: number): { x: number; y: number } {
+  const angle = (index / count) * 2 * Math.PI - Math.PI / 2
+  return { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius }
+}
+
 export default function CarbonCalculator() {
   useDocumentTitle('Carbon Calculator')
   const { theme } = useTheme()
@@ -23,6 +31,7 @@ export default function CarbonCalculator() {
 
   const estimate = estimateCarbon(entries)
   const countedRows = estimate.rows.filter((row) => row.matchedQuantity > 0)
+  const changePercent = monthOverMonthChange(monthlyCarbonTrend(entries))
 
   return (
     <div className="animate-slide-up max-w-3xl space-y-5">
@@ -66,49 +75,79 @@ export default function CarbonCalculator() {
       ) : (
         <>
           {countedRows.length > 0 ? (
-            <div className="rounded-2xl border border-app-border/70 bg-app-surface/80 p-5 shadow-card sm:p-6">
-              <p className="text-sm font-semibold tracking-[0.08em] text-app-ink-soft uppercase">Estimated impact</p>
-              <div className="mt-3 flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:gap-6">
-                <DonutChart
-                  segments={countedRows.map((row) => ({
-                    label: row.label,
-                    value: row.co2eKg,
-                    color: CARBON_TYPE_COLORS[row.type as keyof typeof CARBON_TYPE_COLORS],
-                  }))}
-                  centerValue={formatCo2e(estimate.totalCo2eKg)}
-                  centerCaption="total"
-                  tone={theme}
-                  className="shrink-0"
-                />
-                <ul className="flex w-full min-w-0 flex-col gap-2">
-                  {countedRows.map((row) => {
+            <div className="relative overflow-hidden rounded-2xl border border-forest-700/60 shadow-card">
+              <div
+                className="pointer-events-none absolute inset-0"
+                style={{ background: 'radial-gradient(90% 90% at 50% 0%, rgba(91,156,95,0.16), transparent 60%)' }}
+                aria-hidden="true"
+              />
+              <ContourLines className="pointer-events-none absolute inset-0 size-full opacity-50" />
+
+              <div className="relative flex flex-col items-center gap-6 p-6 sm:p-8 lg:flex-row lg:items-center lg:justify-around">
+                <div className="relative grid shrink-0 place-items-center" style={{ width: 300, height: 300 }}>
+                  <DonutChart
+                    segments={countedRows.map((row) => ({
+                      label: row.label,
+                      value: row.co2eKg,
+                      color: CARBON_TYPE_COLORS[row.type as keyof typeof CARBON_TYPE_COLORS],
+                    }))}
+                    centerValue={formatCo2e(estimate.totalCo2eKg)}
+                    centerCaption="estimated total"
+                    tone="dark"
+                    size={176}
+                  />
+                  {countedRows.map((row, index) => {
                     const Icon = RESOURCE_TYPE_ICONS[row.type]
-                    const percent = estimate.totalCo2eKg > 0 ? (row.co2eKg / estimate.totalCo2eKg) * 100 : 0
+                    const color = CARBON_TYPE_COLORS[row.type as keyof typeof CARBON_TYPE_COLORS]
+                    const { x, y } = orbitPosition(index, countedRows.length, 128)
                     return (
-                      <li key={row.type} className="flex items-center gap-2.5">
+                      <div
+                        key={row.type}
+                        className="absolute flex flex-col items-center gap-1"
+                        style={{ left: `calc(50% + ${x}px)`, top: `calc(50% + ${y}px)`, transform: 'translate(-50%, -50%)' }}
+                      >
                         <span
-                          className="grid size-7 shrink-0 place-items-center rounded-lg text-white"
-                          style={{ backgroundColor: CARBON_TYPE_COLORS[row.type as keyof typeof CARBON_TYPE_COLORS] }}
+                          className="grid size-9 shrink-0 place-items-center rounded-full text-white ring-4 ring-forest-900"
+                          style={{ backgroundColor: color }}
                         >
-                          <Icon className="size-3.5" aria-hidden="true" />
+                          <Icon className="size-4" aria-hidden="true" />
                         </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold text-app-ink">{row.label}</p>
-                          {row.unmatchedEntryCount > 0 && (
-                            <p className="flex items-center gap-1 text-xs text-app-ink-soft">
-                              <Info className="size-3 shrink-0" aria-hidden="true" />
-                              {row.unmatchedEntryCount} not counted
-                            </p>
-                          )}
-                        </div>
-                        <p className="shrink-0 text-right font-display text-sm font-medium text-app-heading">
-                          {row.co2eKg.toFixed(1)} kg
-                          <span className="ml-1.5 text-xs font-normal text-app-ink-soft">{percent.toFixed(0)}%</span>
-                        </p>
-                      </li>
+                        <span className="rounded-full bg-forest-950/70 px-1.5 py-0.5 text-[0.65rem] font-medium whitespace-nowrap text-bone-100">
+                          {row.label}
+                        </span>
+                      </div>
                     )
                   })}
-                </ul>
+                </div>
+
+                <div className="w-full max-w-sm">
+                  <p className="text-xs font-semibold tracking-[0.08em] text-moss-300 uppercase">
+                    Estimated carbon footprint
+                  </p>
+                  <p className="mt-1 text-sm text-bone-100/85">
+                    {changePercent === null
+                      ? 'Log usage across two months to see a trend.'
+                      : `${changePercent <= 0 ? '↓' : '↑'} ${Math.abs(changePercent).toFixed(1)}% vs your previous period`}
+                  </p>
+                  <ul className="mt-4 flex flex-col gap-2">
+                    {countedRows.map((row) => {
+                      const percent = estimate.totalCo2eKg > 0 ? (row.co2eKg / estimate.totalCo2eKg) * 100 : 0
+                      return (
+                        <li key={row.type} className="flex items-center gap-2.5">
+                          <span
+                            className="size-2.5 shrink-0 rounded-full"
+                            style={{ backgroundColor: CARBON_TYPE_COLORS[row.type as keyof typeof CARBON_TYPE_COLORS] }}
+                            aria-hidden="true"
+                          />
+                          <span className="min-w-0 flex-1 truncate text-sm text-bone-100/90">{row.label}</span>
+                          <span className="shrink-0 text-sm font-medium text-bone-50">
+                            {row.co2eKg.toFixed(1)} kg <span className="text-bone-100/60">· {percent.toFixed(0)}%</span>
+                          </span>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
               </div>
             </div>
           ) : (
