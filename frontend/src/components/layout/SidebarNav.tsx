@@ -11,14 +11,12 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
   { to: '/resources', label: 'Resource Tracking', icon: Droplets },
+  { to: '/carbon', label: 'Carbon Calculator', icon: Sprout },
   { to: '/profile', label: 'Farm Profile', icon: UserRound },
 ]
 
 /** Listed so the sidebar shows what's coming without linking anywhere yet. */
-const COMING_SOON_ITEMS: NavItem[] = [
-  { to: '', label: 'Carbon Calculator', icon: Sprout },
-  { to: '', label: 'Analytics', icon: BarChart3 },
-]
+const COMING_SOON_ITEMS: NavItem[] = [{ to: '', label: 'Analytics', icon: BarChart3 }]
 
 interface SidebarNavProps {
   /** Called after a real nav link is clicked — used to close the mobile drawer. */
