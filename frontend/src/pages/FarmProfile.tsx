@@ -95,7 +95,11 @@ export default function FarmProfile() {
         </Alert>
       )}
 
-      <form onSubmit={handleSubmit} noValidate className="space-y-5 rounded-2xl border border-app-border/70 bg-app-surface/80 p-6 shadow-card">
+      <form
+        onSubmit={handleSubmit}
+        noValidate
+        className="space-y-5 rounded-2xl border border-app-border/70 border-l-[3px] border-l-moss-400 bg-app-surface/80 p-6 shadow-card"
+      >
         <TextField
           label="Farm Name"
           tone={theme}

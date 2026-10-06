@@ -6,7 +6,8 @@ import { Sparkline, TrendChart } from '@/components/ui/TrendChart'
 import { useDocumentTitle, useResourceEntries, useTheme } from '@/hooks'
 import type { ResourceType } from '@/types'
 import { monthlyCarbonTrend, monthlyResourceTrends } from '@/utils/analytics'
-import { CARBON_TYPE_COLORS, estimateCarbon, formatCo2e } from '@/utils/carbon'
+import { estimateCarbon, formatCo2e } from '@/utils/carbon'
+import { RESOURCE_TYPE_COLORS } from '@/utils/resourceColors'
 
 const RESOURCE_TYPE_ICONS: Record<ResourceType, LucideIcon> = {
   WATER: Droplets,
@@ -85,7 +86,7 @@ export default function Analytics() {
                     segments={sourceRows.map((row) => ({
                       label: row.label,
                       value: row.co2eKg,
-                      color: CARBON_TYPE_COLORS[row.type as keyof typeof CARBON_TYPE_COLORS],
+                      color: RESOURCE_TYPE_COLORS[row.type],
                     }))}
                     centerValue={`${sourceRows.length}`}
                     centerCaption={sourceRows.length === 1 ? 'source' : 'sources'}
@@ -98,7 +99,7 @@ export default function Analytics() {
                       <li key={row.type} className="flex items-center gap-2 text-sm">
                         <span
                           className="size-2.5 shrink-0 rounded-full"
-                          style={{ backgroundColor: CARBON_TYPE_COLORS[row.type as keyof typeof CARBON_TYPE_COLORS] }}
+                          style={{ backgroundColor: RESOURCE_TYPE_COLORS[row.type] }}
                           aria-hidden="true"
                         />
                         <span className="truncate text-app-ink-soft">{row.label}</span>
@@ -123,10 +124,15 @@ export default function Analytics() {
               <div className="grid gap-4 sm:grid-cols-2">
                 {resourceTrends.map((trend) => {
                   const Icon = RESOURCE_TYPE_ICONS[trend.type]
+                  const color = RESOURCE_TYPE_COLORS[trend.type]
                   return (
-                    <div key={trend.type} className="rounded-2xl border border-app-border/70 bg-app-surface/70 p-4">
+                    <div
+                      key={trend.type}
+                      className="rounded-2xl border border-app-border/70 border-l-[3px] bg-app-surface/70 p-4 shadow-card transition-transform hover:-translate-y-0.5"
+                      style={{ borderLeftColor: color }}
+                    >
                       <div className="flex items-center gap-2.5">
-                        <span className="grid size-9 place-items-center rounded-lg border border-app-border bg-app-chip text-app-link">
+                        <span className="grid size-9 place-items-center rounded-lg text-white" style={{ backgroundColor: color }}>
                           <Icon className="size-4.5" aria-hidden="true" />
                         </span>
                         <div>

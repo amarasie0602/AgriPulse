@@ -1,12 +1,22 @@
-import { ArrowRight, CircleAlert, Droplets, MapPin, Sprout } from 'lucide-react'
+import { ArrowRight, Bug, CircleAlert, Droplets, Fuel, MapPin, Package, Sprout, Zap, type LucideIcon } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
 import { Sparkline } from '@/components/ui/TrendChart'
 import { useAuth, useDocumentTitle, useProfile, useResourceEntries, useTheme } from '@/hooks'
-import { RESOURCE_TYPE_LABELS } from '@/types'
+import { RESOURCE_TYPE_LABELS, type ResourceType } from '@/types'
 import { monthlyCarbonTrend } from '@/utils/analytics'
 import { estimateCarbon, formatCo2e } from '@/utils/carbon'
+import { RESOURCE_TYPE_COLORS } from '@/utils/resourceColors'
+
+const RESOURCE_TYPE_ICONS: Record<ResourceType, LucideIcon> = {
+  WATER: Droplets,
+  ENERGY: Zap,
+  FERTILIZER: Sprout,
+  PESTICIDE: Bug,
+  FUEL: Fuel,
+  OTHER: Package,
+}
 
 export default function Dashboard() {
   const { user } = useAuth()
@@ -25,13 +35,25 @@ export default function Dashboard() {
 
   return (
     <div className="animate-slide-up space-y-8">
-      <div>
-        <h1 className="font-display text-3xl leading-tight font-medium tracking-tight text-app-heading sm:text-4xl">
-          Welcome back, {firstName}
-        </h1>
-        <p className="mt-1.5 text-app-ink-soft">
-          {profile?.farmName ? profile.farmName : 'Your sustainability workspace is being prepared.'}
-        </p>
+      <div className="relative overflow-hidden rounded-2xl border border-app-border/70 bg-app-surface/80 p-6 shadow-card sm:p-7">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-90"
+          style={{
+            background:
+              theme === 'dark'
+                ? 'radial-gradient(120% 140% at 0% 0%, rgba(224,168,62,0.16), transparent 55%), radial-gradient(120% 140% at 100% 100%, rgba(91,156,95,0.14), transparent 55%)'
+                : 'radial-gradient(120% 140% at 0% 0%, rgba(224,168,62,0.14), transparent 55%), radial-gradient(120% 140% at 100% 100%, rgba(91,156,95,0.12), transparent 55%)',
+          }}
+          aria-hidden="true"
+        />
+        <div className="relative">
+          <h1 className="font-display text-3xl leading-tight font-medium tracking-tight text-app-heading sm:text-4xl">
+            Welcome back, {firstName}
+          </h1>
+          <p className="mt-1.5 text-app-ink-soft">
+            {profile?.farmName ? profile.farmName : 'Your sustainability workspace is being prepared.'}
+          </p>
+        </div>
       </div>
 
       {error && (
@@ -112,12 +134,28 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-3">
-            {summaryEntries.map(([type, total]) => (
-              <div key={type} className="rounded-2xl border border-app-border/70 bg-app-surface/70 p-4">
-                <p className="text-sm font-semibold text-app-ink-soft">{RESOURCE_TYPE_LABELS[type]}</p>
-                <p className="mt-1 font-display text-xl font-medium text-app-heading">{total} total</p>
-              </div>
-            ))}
+            {summaryEntries.map(([type, total]) => {
+              const Icon = RESOURCE_TYPE_ICONS[type]
+              const color = RESOURCE_TYPE_COLORS[type]
+              return (
+                <div
+                  key={type}
+                  className="rounded-2xl border border-app-border/70 border-l-[3px] bg-app-surface/70 p-4 shadow-card transition-transform hover:-translate-y-0.5"
+                  style={{ borderLeftColor: color }}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      className="grid size-9 shrink-0 place-items-center rounded-lg text-white"
+                      style={{ backgroundColor: color }}
+                    >
+                      <Icon className="size-4.5" aria-hidden="true" />
+                    </span>
+                    <p className="text-sm font-semibold text-app-ink-soft">{RESOURCE_TYPE_LABELS[type]}</p>
+                  </div>
+                  <p className="mt-2 font-display text-xl font-medium text-app-heading">{total} total</p>
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
@@ -144,7 +182,7 @@ export default function Dashboard() {
             </p>
           </div>
         ) : (
-          <div className="rounded-2xl border border-app-border/70 bg-app-surface/70 p-4">
+          <div className="rounded-2xl border border-app-border/70 border-l-[3px] border-l-clay-500 bg-app-surface/70 p-4 shadow-card transition-transform hover:-translate-y-0.5">
             <p className="text-sm font-semibold text-app-ink-soft">Estimated total</p>
             <p className="mt-1 font-display text-xl font-medium text-app-heading">
               {formatCo2e(carbonEstimate.totalCo2eKg)}
@@ -173,7 +211,7 @@ export default function Dashboard() {
             <p className="text-app-ink-soft">Trends build up once you've logged usage across more than one month.</p>
           </div>
         ) : (
-          <div className="rounded-2xl border border-app-border/70 bg-app-surface/70 p-4">
+          <div className="rounded-2xl border border-app-border/70 border-l-[3px] border-l-wheat-500 bg-app-surface/70 p-4 shadow-card transition-transform hover:-translate-y-0.5">
             <p className="text-sm font-semibold text-app-ink-soft">Carbon impact, by month</p>
             <Sparkline points={carbonTrend} tone={theme} unit="kg CO₂e" className="mt-2" />
           </div>

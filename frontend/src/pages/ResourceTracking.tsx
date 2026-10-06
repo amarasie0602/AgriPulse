@@ -11,6 +11,7 @@ import {
   RESOURCE_TYPE_LABELS,
   type ResourceType,
 } from '@/types'
+import { RESOURCE_TYPE_COLORS } from '@/utils/resourceColors'
 
 const RESOURCE_TYPE_ICONS: Record<ResourceType, LucideIcon> = {
   WATER: Droplets,
@@ -123,10 +124,15 @@ export default function ResourceTracking() {
         <div className="grid gap-3 sm:grid-cols-3">
           {summaryTypes.map((type) => {
             const Icon = RESOURCE_TYPE_ICONS[type]
+            const color = RESOURCE_TYPE_COLORS[type]
             return (
-              <div key={type} className="rounded-2xl border border-app-border/70 bg-app-surface/70 p-4">
+              <div
+                key={type}
+                className="rounded-2xl border border-app-border/70 border-l-[3px] bg-app-surface/70 p-4 shadow-card transition-transform hover:-translate-y-0.5"
+                style={{ borderLeftColor: color }}
+              >
                 <div className="flex items-center gap-2.5">
-                  <span className="grid size-9 place-items-center rounded-lg border border-app-border bg-app-chip text-app-link">
+                  <span className="grid size-9 place-items-center rounded-lg text-white" style={{ backgroundColor: color }}>
                     <Icon className="size-4.5" aria-hidden="true" />
                   </span>
                   <p className="text-sm font-semibold text-app-ink-soft">{RESOURCE_TYPE_LABELS[type]}</p>
@@ -237,12 +243,13 @@ export default function ResourceTracking() {
           <ul className="flex flex-col gap-2">
             {entries.map((entry) => {
               const Icon = RESOURCE_TYPE_ICONS[entry.resourceType]
+              const color = RESOURCE_TYPE_COLORS[entry.resourceType]
               return (
                 <li
                   key={entry.id}
-                  className="flex items-center gap-3 rounded-xl border border-app-border/70 bg-app-surface/60 p-3.5"
+                  className="flex items-center gap-3 rounded-xl border border-app-border/70 bg-app-surface/60 p-3.5 transition-colors hover:bg-app-surface/90"
                 >
-                  <span className="grid size-9 shrink-0 place-items-center rounded-lg border border-app-border bg-app-chip text-app-link">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-lg text-white" style={{ backgroundColor: color }}>
                     <Icon className="size-4.5" aria-hidden="true" />
                   </span>
                   <div className="min-w-0 flex-1">

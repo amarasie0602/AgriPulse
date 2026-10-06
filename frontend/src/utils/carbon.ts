@@ -1,4 +1,5 @@
 import type { ResourceEntry, ResourceType } from '@/types'
+import { RESOURCE_TYPE_COLORS } from './resourceColors'
 
 /**
  * Illustrative default emission factors — general estimates for guidance
@@ -26,12 +27,12 @@ export const EMISSION_FACTORS: EmissionFactor[] = [
 
 export const CARBON_EXCLUDED_TYPES: ResourceType[] = ['WATER', 'OTHER']
 
-/** Fixed, theme-independent colors for each carbon-relevant type — used by donut/pie charts and legends. */
+/** Carbon-relevant subset of RESOURCE_TYPE_COLORS, kept for callers that only deal with the four counted types. */
 export const CARBON_TYPE_COLORS: Record<'FUEL' | 'ENERGY' | 'FERTILIZER' | 'PESTICIDE', string> = {
-  FUEL: '#c2693c',
-  ENERGY: '#e0a83e',
-  FERTILIZER: '#5b9c5f',
-  PESTICIDE: '#4a8a93',
+  FUEL: RESOURCE_TYPE_COLORS.FUEL,
+  ENERGY: RESOURCE_TYPE_COLORS.ENERGY,
+  FERTILIZER: RESOURCE_TYPE_COLORS.FERTILIZER,
+  PESTICIDE: RESOURCE_TYPE_COLORS.PESTICIDE,
 }
 
 export interface CarbonBreakdownRow {
