@@ -12,11 +12,12 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
   { to: '/resources', label: 'Resource Tracking', icon: Droplets },
   { to: '/carbon', label: 'Carbon Calculator', icon: Sprout },
+  { to: '/analytics', label: 'Analytics', icon: BarChart3 },
   { to: '/profile', label: 'Farm Profile', icon: UserRound },
 ]
 
 /** Listed so the sidebar shows what's coming without linking anywhere yet. */
-const COMING_SOON_ITEMS: NavItem[] = [{ to: '', label: 'Analytics', icon: BarChart3 }]
+const COMING_SOON_ITEMS: NavItem[] = []
 
 interface SidebarNavProps {
   /** Called after a real nav link is clicked — used to close the mobile drawer. */
@@ -49,25 +50,27 @@ export function SidebarNav({ onNavigate }: SidebarNavProps) {
         ))}
       </ul>
 
-      <div>
-        <p className="mb-2 px-3.5 text-[0.65rem] font-semibold tracking-[0.16em] text-app-ink-soft/70 uppercase">
-          Coming soon
-        </p>
-        <ul className="flex flex-col gap-1">
-          {COMING_SOON_ITEMS.map(({ label, icon: Icon }) => (
-            <li key={label}>
-              <span
-                aria-disabled="true"
-                title="Not built yet"
-                className="flex cursor-not-allowed items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-app-ink-soft/50"
-              >
-                <Icon className="size-4.5" aria-hidden="true" />
-                {label}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </div>
+      {COMING_SOON_ITEMS.length > 0 && (
+        <div>
+          <p className="mb-2 px-3.5 text-[0.65rem] font-semibold tracking-[0.16em] text-app-ink-soft/70 uppercase">
+            Coming soon
+          </p>
+          <ul className="flex flex-col gap-1">
+            {COMING_SOON_ITEMS.map(({ label, icon: Icon }) => (
+              <li key={label}>
+                <span
+                  aria-disabled="true"
+                  title="Not built yet"
+                  className="flex cursor-not-allowed items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-app-ink-soft/50"
+                >
+                  <Icon className="size-4.5" aria-hidden="true" />
+                  {label}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </nav>
   )
 }
