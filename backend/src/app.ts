@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import { env } from './config/env';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { authRouter } from './modules/auth/auth.routes';
+import { farmsRouter } from './modules/farms/farms.routes';
 import { resourcesRouter } from './modules/resources/resources.routes';
 import { usersRouter } from './modules/users/users.routes';
 
@@ -20,6 +21,7 @@ export function createApp(): Express {
 
   app.use('/auth', authRouter);
   app.use('/users', usersRouter);
+  app.use('/farms', farmsRouter);
   app.use('/resources', resourcesRouter);
 
   app.use(notFoundHandler);
