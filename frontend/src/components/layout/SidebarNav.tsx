@@ -1,4 +1,4 @@
-import { BarChart3, Droplets, LayoutDashboard, Sprout, UserRound } from 'lucide-react'
+import { BarChart3, Droplets, LandPlot, LayoutDashboard, Sprout, UserRound } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { cn } from '@/utils/cn'
 

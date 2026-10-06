@@ -11,7 +11,7 @@ export class AuthError extends Error {
   }
 }
 
-type AuthAction = 'login' | 'register' | 'google' | 'profile'
+type AuthAction = 'login' | 'register' | 'google' | 'profile' | 'farms'
 
 export const NETWORK_ERROR_MESSAGE = 'Unable to connect to AgriPulse. Please try again.'
 
