@@ -95,13 +95,14 @@ frontend/
     │   │   ├── SmartFieldConsole.tsx / OrbitMetricCard.tsx / AerialFieldBackdrop.tsx / ContourLines.tsx
     │   │   ├── DashboardShell.tsx   Signed-in frame: sidebar (desktop) / drawer (mobile) + outlet + ThemeToggle
     │   │   └── SidebarNav.tsx       Nav links + "Coming soon" section, shared by both
-    │   └── ui/                      Button, TextField, Select, Checkbox, ChipInput, Alert, Divider, Logo, ThemeToggle, …
-    │                                 (TextField/Select/Checkbox/Alert/Divider/Button take a light/dark `tone`/`surface`/`variant`)
+    │   └── ui/                      Button, TextField, Select, Checkbox, ChipInput, Alert, Divider, Logo, ThemeToggle, TrendChart, Sparkline, …
+    │                                 (TextField/Select/Checkbox/Alert/Divider/Button/TrendChart take a light/dark `tone`/`surface`/`variant`)
     ├── pages/
     │   ├── Login.tsx / Register.tsx
-    │   ├── Dashboard.tsx            Overview: farm summary, resource + carbon teasers, upcoming modules
+    │   ├── Dashboard.tsx            Overview: farm summary, resource/carbon/trend teasers
     │   ├── ResourceTracking.tsx     Log + list water/energy/input usage, per-type totals
     │   ├── CarbonCalculator.tsx     CO₂e estimate computed from the Resource Tracking log — no new data model
+    │   ├── Analytics.tsx            Monthly carbon + per-type usage trends, same computed-view pattern
     │   └── FarmProfile.tsx          Edit farm name, location, size, crop types
     ├── context/
     │   ├── AuthContext.tsx           user, token, login, register, loginWithGoogle, logout, isAuthenticated, loading, hasRole
@@ -117,7 +118,7 @@ frontend/
     │   ├── errors.ts                HTTP status → friendly message
     │   └── tokenStorage.ts          Session persistence
     ├── types/                       Auth, navigation, farm profile and resource entry types
-    └── utils/                       validators, jwt (decode + expiry), carbon (emission estimate), cn
+    └── utils/                       validators, jwt (decode + expiry), carbon (emission estimate), analytics (monthly trends), cn
 ```
 
 ## Light / dark mode
@@ -136,6 +137,14 @@ The signed-in dashboard (Overview, Resource Tracking, Farm Profile — everythin
 - **Emission factors** are simplified, illustrative defaults (e.g. diesel 2.68 kg CO₂e/L, grid electricity 0.42 kg CO₂e/kWh) applied to `FUEL`, `ENERGY`, `FERTILIZER` and `PESTICIDE` entries. The page says outright that these are a guide, not a certified calculation — same honesty convention as the "Sample" badges on the login page.
 - **Unit-matched only:** an entry only counts if its `unit` matches the factor's expected unit (e.g. fuel in `L`). Since Resource Tracking's unit field is free text, an entry logged in a different unit is excluded from the total and called out in the breakdown ("N entries logged in a different unit, not counted") rather than silently mis-converted.
 - **`WATER` and `OTHER`** are never counted toward the total — water's footprint is mostly indirect (pumping energy, already under `ENERGY`), and `OTHER` is too vague to estimate.
+
+## Analytics
+
+`/analytics` is another pure computed view (`utils/analytics.ts`) — no backend endpoint or stored aggregate, just the same `/resources` entries bucketed by month, client-side.
+
+- **Carbon impact over time:** reuses `estimateCarbon` from the Carbon Calculator, run once per month bucket, rendered with `TrendChart`.
+- **Resource usage trends:** one card per resource type that has data, each with its own monthly `Sparkline` in that type's own unit — types aren't compared against each other directly, since `L`, `kWh` and `kg` aren't the same scale. The same "only count entries in the expected unit" rule from the Carbon Calculator applies here too.
+- **`TrendChart`/`Sparkline`** (`components/ui/TrendChart.tsx`) are small hand-rolled SVG line/area charts — no charting library — consistent with the rest of the app's inline-SVG visuals (the login console, `OrbitMetricCard`, etc.). The `<svg>` is explicitly sized `w-full h-full` against its container rather than relying on its `viewBox` aspect ratio, which matters for `Sparkline`'s fixed-height box — without it, the chart ignores the container height entirely.
 
 ## How authentication works
 
