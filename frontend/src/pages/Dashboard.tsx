@@ -1,12 +1,41 @@
-import { ArrowRight, CircleAlert, Droplets, MapPin, Sprout } from 'lucide-react'
+import { ArrowRight, Bug, CircleAlert, Droplets, Fuel, MapPin, Package, Sprout, TrendingUp, Zap, type LucideIcon } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
+import { AerialFieldBackdrop } from '@/components/layout/AerialFieldBackdrop'
+import { FarmSnapshot } from '@/components/layout/FarmSnapshot'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { ProgressRing } from '@/components/ui/ProgressRing'
 import { Sparkline } from '@/components/ui/TrendChart'
 import { useAuth, useDocumentTitle, useProfile, useResourceEntries, useTheme } from '@/hooks'
-import { RESOURCE_TYPE_LABELS } from '@/types'
+import { RESOURCE_TYPE_LABELS, type ResourceType } from '@/types'
 import { monthlyCarbonTrend } from '@/utils/analytics'
 import { estimateCarbon, formatCo2e } from '@/utils/carbon'
+import { RESOURCE_TYPE_COLORS } from '@/utils/resourceColors'
+import { estimateSustainabilityScore } from '@/utils/sustainability'
+
+const RESOURCE_TYPE_ICONS: Record<ResourceType, LucideIcon> = {
+  WATER: Droplets,
+  ENERGY: Zap,
+  FERTILIZER: Sprout,
+  PESTICIDE: Bug,
+  FUEL: Fuel,
+  OTHER: Package,
+}
+
+function timeGreeting(): string {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'Good morning'
+  if (hour < 18) return 'Good afternoon'
+  return 'Good evening'
+}
+
+/** Green/amber/red, matching the rest of the app's health-status convention. */
+function scoreGradient(score: number): [string, string] {
+  if (score >= 70) return ['#3b7a60', '#8fae86']
+  if (score >= 40) return ['#c99a4b', '#e0a83e']
+  return ['#9f3a3a', '#c2504a']
+}
 
 export default function Dashboard() {
   const { user } = useAuth()
@@ -22,16 +51,47 @@ export default function Dashboard() {
   const carbonEstimate = estimateCarbon(entries)
   const carbonTrend = monthlyCarbonTrend(entries)
   const hasTrendData = carbonTrend.some((point) => point.value > 0)
+  const sustainability = estimateSustainabilityScore(carbonTrend)
+  const changeLabel =
+    sustainability.changePercent === null
+      ? 'Log usage across two months to see a trend.'
+      : `${sustainability.changePercent <= 0 ? '↓' : '↑'} ${Math.abs(sustainability.changePercent).toFixed(1)}% carbon footprint vs last month`
 
   return (
     <div className="animate-slide-up space-y-8">
-      <div>
-        <h1 className="font-display text-3xl leading-tight font-medium tracking-tight text-app-heading sm:text-4xl">
-          Welcome back, {firstName}
-        </h1>
-        <p className="mt-1.5 text-app-ink-soft">
-          {profile?.farmName ? profile.farmName : 'Your sustainability workspace is being prepared.'}
-        </p>
+      <div className="relative overflow-hidden rounded-2xl border border-forest-700/60 shadow-card">
+        <AerialFieldBackdrop className="absolute inset-0 size-full" />
+        <div className="relative p-6 sm:p-8">
+          <p className="text-sm font-medium text-moss-300">{timeGreeting()}</p>
+          <h1 className="mt-1 font-display text-3xl leading-tight font-medium tracking-tight text-bone-50 sm:text-4xl">
+            {profile?.farmName || `${firstName}'s farm`}
+          </h1>
+          {profile?.location && (
+            <p className="mt-1.5 flex items-center gap-1.5 text-sm text-moss-300">
+              <MapPin className="size-4 shrink-0" aria-hidden="true" />
+              {profile.location}
+              {profile.farmSizeHectares ? ` · ${profile.farmSizeHectares} ha` : ''}
+            </p>
+          )}
+
+          <div className="mt-7 flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:gap-7">
+            <ProgressRing
+              value={sustainability.score}
+              gradient={scoreGradient(sustainability.score)}
+              label="Sustainability score"
+              caption="/ 100"
+            />
+            <div>
+              <p className="text-xs font-semibold tracking-[0.08em] text-moss-300 uppercase">Sustainability score</p>
+              <p className="mt-1 text-sm text-bone-100/85">{changeLabel}</p>
+              <p className="mt-1 text-xs text-moss-300/70">Illustrative, based on your carbon footprint trend</p>
+            </div>
+          </div>
+
+          {!loading && profile && profile.cropTypes.length > 0 && (
+            <FarmSnapshot cropTypes={profile.cropTypes} farmSizeHectares={profile.farmSizeHectares} className="mt-7" />
+          )}
+        </div>
       </div>
 
       {error && (
@@ -61,36 +121,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {!loading && profile && !profileIncomplete && (
-        <div className="rounded-2xl border border-app-border/70 bg-app-surface/80 p-5 shadow-card">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="font-display text-xl font-medium text-app-heading">{profile.farmName}</p>
-              <p className="mt-1 flex items-center gap-1.5 text-sm text-app-ink-soft">
-                <MapPin className="size-4" aria-hidden="true" />
-                {profile.location}
-                {profile.farmSizeHectares ? ` · ${profile.farmSizeHectares} ha` : ''}
-              </p>
-            </div>
-            <Link
-              to="/profile"
-              className="rounded text-sm font-semibold text-app-link underline-offset-4 hover:text-app-heading hover:underline"
-            >
-              Edit profile
-            </Link>
-          </div>
-          {profile.cropTypes.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {profile.cropTypes.map((crop) => (
-                <span key={crop} className="rounded-full bg-app-accent/8 px-2.5 py-1 text-xs font-medium text-app-heading">
-                  {crop}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
       <div>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold tracking-[0.08em] text-app-ink-soft uppercase">Resource usage</h2>
@@ -106,18 +136,36 @@ export default function Dashboard() {
         {resourcesLoading ? (
           <p className="text-app-ink-soft">Loading…</p>
         ) : summaryEntries.length === 0 ? (
-          <div className="flex items-center gap-3 rounded-2xl border border-dashed border-app-border p-5">
-            <Droplets className="size-5 shrink-0 text-app-link" aria-hidden="true" />
-            <p className="text-app-ink-soft">No usage logged yet — start tracking water, energy, or other inputs.</p>
-          </div>
+          <EmptyState
+            icon={Droplets}
+            color={RESOURCE_TYPE_COLORS.WATER}
+            title="No usage logged yet"
+            description="Start tracking water, energy, or other inputs to see them here."
+          />
         ) : (
           <div className="grid gap-3 sm:grid-cols-3">
-            {summaryEntries.map(([type, total]) => (
-              <div key={type} className="rounded-2xl border border-app-border/70 bg-app-surface/70 p-4">
-                <p className="text-sm font-semibold text-app-ink-soft">{RESOURCE_TYPE_LABELS[type]}</p>
-                <p className="mt-1 font-display text-xl font-medium text-app-heading">{total} total</p>
-              </div>
-            ))}
+            {summaryEntries.map(([type, total]) => {
+              const Icon = RESOURCE_TYPE_ICONS[type]
+              const color = RESOURCE_TYPE_COLORS[type]
+              return (
+                <div
+                  key={type}
+                  className="rounded-2xl border border-app-border/70 border-l-[3px] bg-app-surface/70 p-4 shadow-card transition-transform hover:-translate-y-0.5"
+                  style={{ borderLeftColor: color }}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      className="grid size-9 shrink-0 place-items-center rounded-lg text-white"
+                      style={{ backgroundColor: color }}
+                    >
+                      <Icon className="size-4.5" aria-hidden="true" />
+                    </span>
+                    <p className="text-sm font-semibold text-app-ink-soft">{RESOURCE_TYPE_LABELS[type]}</p>
+                  </div>
+                  <p className="mt-2 font-display text-xl font-medium text-app-heading">{total} total</p>
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
@@ -137,14 +185,14 @@ export default function Dashboard() {
         {resourcesLoading ? (
           <p className="text-app-ink-soft">Loading…</p>
         ) : !carbonEstimate.hasData ? (
-          <div className="flex items-center gap-3 rounded-2xl border border-dashed border-app-border p-5">
-            <Sprout className="size-5 shrink-0 text-app-link" aria-hidden="true" />
-            <p className="text-app-ink-soft">
-              Log fuel, energy, fertilizer or pesticide usage to see an estimated CO₂e footprint.
-            </p>
-          </div>
+          <EmptyState
+            icon={Sprout}
+            color={RESOURCE_TYPE_COLORS.FERTILIZER}
+            title="No carbon estimate yet"
+            description="Log fuel, energy, fertilizer or pesticide usage to see an estimated CO₂e footprint."
+          />
         ) : (
-          <div className="rounded-2xl border border-app-border/70 bg-app-surface/70 p-4">
+          <div className="rounded-2xl border border-app-border/70 border-l-[3px] border-l-clay-500 bg-app-surface/70 p-4 shadow-card transition-transform hover:-translate-y-0.5">
             <p className="text-sm font-semibold text-app-ink-soft">Estimated total</p>
             <p className="mt-1 font-display text-xl font-medium text-app-heading">
               {formatCo2e(carbonEstimate.totalCo2eKg)}
@@ -168,12 +216,14 @@ export default function Dashboard() {
         {resourcesLoading ? (
           <p className="text-app-ink-soft">Loading…</p>
         ) : !hasTrendData ? (
-          <div className="flex items-center gap-3 rounded-2xl border border-dashed border-app-border p-5">
-            <Droplets className="size-5 shrink-0 text-app-link" aria-hidden="true" />
-            <p className="text-app-ink-soft">Trends build up once you've logged usage across more than one month.</p>
-          </div>
+          <EmptyState
+            icon={TrendingUp}
+            color={RESOURCE_TYPE_COLORS.ENERGY}
+            title="No trends yet"
+            description="Trends build up once you've logged usage across more than one month."
+          />
         ) : (
-          <div className="rounded-2xl border border-app-border/70 bg-app-surface/70 p-4">
+          <div className="rounded-2xl border border-app-border/70 border-l-[3px] border-l-wheat-500 bg-app-surface/70 p-4 shadow-card transition-transform hover:-translate-y-0.5">
             <p className="text-sm font-semibold text-app-ink-soft">Carbon impact, by month</p>
             <Sparkline points={carbonTrend} tone={theme} unit="kg CO₂e" className="mt-2" />
           </div>

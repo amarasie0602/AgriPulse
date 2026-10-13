@@ -46,6 +46,15 @@ export function monthlyCarbonTrend(entries: ResourceEntry[]): TrendPoint[] {
   })
 }
 
+/** Percent change between the last two non-zero points, or null with fewer than two. */
+export function monthOverMonthChange(trend: TrendPoint[]): number | null {
+  const nonZero = trend.filter((point) => point.value > 0)
+  if (nonZero.length < 2) return null
+  const last = nonZero[nonZero.length - 1].value
+  const prev = nonZero[nonZero.length - 2].value
+  return ((last - prev) / prev) * 100
+}
+
 export interface ResourceTypeTrend {
   type: ResourceType
   label: string

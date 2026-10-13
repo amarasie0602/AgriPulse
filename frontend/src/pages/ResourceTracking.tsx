@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Bug, Calendar, Droplets, Fuel, Package, Plus, Sprout, Trash2, Zap, type LucideIcon } from 'lucide-react'
 import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { Select } from '@/components/ui/Select'
 import { TextField } from '@/components/ui/TextField'
 import { useDocumentTitle, useResourceEntries, useTheme } from '@/hooks'
@@ -9,8 +10,10 @@ import {
   RESOURCE_TYPES,
   RESOURCE_TYPE_DEFAULT_UNIT,
   RESOURCE_TYPE_LABELS,
+  type ResourceEntry,
   type ResourceType,
 } from '@/types'
+import { RESOURCE_TYPE_COLORS } from '@/utils/resourceColors'
 
 const RESOURCE_TYPE_ICONS: Record<ResourceType, LucideIcon> = {
   WATER: Droplets,
@@ -35,6 +38,29 @@ interface FormState {
 
 function emptyForm(): FormState {
   return { resourceType: 'WATER', quantity: '', unit: RESOURCE_TYPE_DEFAULT_UNIT.WATER, date: todayIsoDate(), notes: '' }
+}
+
+function dayLabel(isoDate: string): string {
+  const date = new Date(isoDate)
+  const today = new Date()
+  const yesterday = new Date(today)
+  yesterday.setDate(today.getDate() - 1)
+  const sameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString()
+  if (sameDay(date, today)) return 'Today'
+  if (sameDay(date, yesterday)) return 'Yesterday'
+  return date.toLocaleDateString(undefined, { dateStyle: 'medium' })
+}
+
+/** Assumes entries already come newest-first, so consecutive same-day entries stay grouped. */
+function groupEntriesByDay(entries: ResourceEntry[]): { label: string; entries: ResourceEntry[] }[] {
+  const groups: { label: string; entries: ResourceEntry[] }[] = []
+  for (const entry of entries) {
+    const label = dayLabel(entry.date)
+    const current = groups[groups.length - 1]
+    if (current && current.label === label) current.entries.push(entry)
+    else groups.push({ label, entries: [entry] })
+  }
+  return groups
 }
 
 export default function ResourceTracking() {
@@ -123,10 +149,15 @@ export default function ResourceTracking() {
         <div className="grid gap-3 sm:grid-cols-3">
           {summaryTypes.map((type) => {
             const Icon = RESOURCE_TYPE_ICONS[type]
+            const color = RESOURCE_TYPE_COLORS[type]
             return (
-              <div key={type} className="rounded-2xl border border-app-border/70 bg-app-surface/70 p-4">
+              <div
+                key={type}
+                className="rounded-2xl border border-app-border/70 border-l-[3px] bg-app-surface/70 p-4 shadow-card transition-transform hover:-translate-y-0.5"
+                style={{ borderLeftColor: color }}
+              >
                 <div className="flex items-center gap-2.5">
-                  <span className="grid size-9 place-items-center rounded-lg border border-app-border bg-app-chip text-app-link">
+                  <span className="grid size-9 place-items-center rounded-lg text-white" style={{ backgroundColor: color }}>
                     <Icon className="size-4.5" aria-hidden="true" />
                   </span>
                   <p className="text-sm font-semibold text-app-ink-soft">{RESOURCE_TYPE_LABELS[type]}</p>
@@ -230,44 +261,64 @@ export default function ResourceTracking() {
         {loading ? (
           <p className="text-app-ink-soft">Loading…</p>
         ) : entries.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-app-border p-6 text-center text-app-ink-soft">
-            No entries yet — add your first one above.
-          </p>
+          <EmptyState
+            icon={Droplets}
+            color={RESOURCE_TYPE_COLORS.WATER}
+            title="No entries yet"
+            description="Add your first one above to start building your usage log."
+            className="sm:justify-center sm:text-center"
+          />
         ) : (
-          <ul className="flex flex-col gap-2">
-            {entries.map((entry) => {
-              const Icon = RESOURCE_TYPE_ICONS[entry.resourceType]
-              return (
-                <li
-                  key={entry.id}
-                  className="flex items-center gap-3 rounded-xl border border-app-border/70 bg-app-surface/60 p-3.5"
-                >
-                  <span className="grid size-9 shrink-0 place-items-center rounded-lg border border-app-border bg-app-chip text-app-link">
-                    <Icon className="size-4.5" aria-hidden="true" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-app-ink">
-                      {entry.quantity} {entry.unit}{' '}
-                      <span className="font-normal text-app-ink-soft">· {RESOURCE_TYPE_LABELS[entry.resourceType]}</span>
-                    </p>
-                    <p className="truncate text-sm text-app-ink-soft">
-                      {new Date(entry.date).toLocaleDateString(undefined, { dateStyle: 'medium' })}
-                      {entry.notes ? ` · ${entry.notes}` : ''}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleRemove(entry.id)}
-                    disabled={removingId === entry.id}
-                    aria-label="Delete entry"
-                    className="grid size-9 shrink-0 place-items-center rounded-lg text-app-ink-soft transition-colors hover:bg-app-danger-bg hover:text-app-danger-text disabled:opacity-50"
-                  >
-                    <Trash2 className="size-4.5" aria-hidden="true" />
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
+          <div className="flex flex-col gap-6">
+            {groupEntriesByDay(entries).map((group) => (
+              <div key={group.label}>
+                <p className="mb-2.5 text-xs font-semibold tracking-[0.1em] text-app-ink-soft uppercase">{group.label}</p>
+                <ul className="flex flex-col gap-2 border-l-2 border-app-border pl-5">
+                  {group.entries.map((entry) => {
+                    const Icon = RESOURCE_TYPE_ICONS[entry.resourceType]
+                    const color = RESOURCE_TYPE_COLORS[entry.resourceType]
+                    return (
+                      <li
+                        key={entry.id}
+                        className="relative flex items-center gap-3 rounded-xl border border-app-border/70 bg-app-surface/60 p-3.5 transition-colors hover:bg-app-surface/90"
+                      >
+                        <span
+                          className="absolute top-1/2 -left-[25px] size-2.5 -translate-y-1/2 rounded-full ring-4 ring-app-bg"
+                          style={{ backgroundColor: color }}
+                          aria-hidden="true"
+                        />
+                        <span
+                          className="grid size-9 shrink-0 place-items-center rounded-lg text-white"
+                          style={{ backgroundColor: color }}
+                        >
+                          <Icon className="size-4.5" aria-hidden="true" />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-app-ink">
+                            {entry.quantity} {entry.unit}{' '}
+                            <span className="font-normal text-app-ink-soft">· {RESOURCE_TYPE_LABELS[entry.resourceType]}</span>
+                          </p>
+                          <p className="truncate text-sm text-app-ink-soft">
+                            Logged {new Date(entry.createdAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
+                            {entry.notes ? ` · ${entry.notes}` : ''}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemove(entry.id)}
+                          disabled={removingId === entry.id}
+                          aria-label="Delete entry"
+                          className="grid size-9 shrink-0 place-items-center rounded-lg text-app-ink-soft transition-colors hover:bg-app-danger-bg hover:text-app-danger-text disabled:opacity-50"
+                        >
+                          <Trash2 className="size-4.5" aria-hidden="true" />
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>

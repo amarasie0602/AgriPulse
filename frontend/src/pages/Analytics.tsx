@@ -1,12 +1,15 @@
 import { BarChart3, Bug, Droplets, Fuel, Info, Package, Sprout, Zap, type LucideIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Alert } from '@/components/ui/Alert'
+import { ContourLines } from '@/components/layout/ContourLines'
 import { DonutChart } from '@/components/ui/DonutChart'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { Sparkline, TrendChart } from '@/components/ui/TrendChart'
 import { useDocumentTitle, useResourceEntries, useTheme } from '@/hooks'
 import type { ResourceType } from '@/types'
 import { monthlyCarbonTrend, monthlyResourceTrends } from '@/utils/analytics'
-import { CARBON_TYPE_COLORS, estimateCarbon, formatCo2e } from '@/utils/carbon'
+import { estimateCarbon, formatCo2e } from '@/utils/carbon'
+import { RESOURCE_TYPE_COLORS } from '@/utils/resourceColors'
 
 const RESOURCE_TYPE_ICONS: Record<ResourceType, LucideIcon> = {
   WATER: Droplets,
@@ -46,72 +49,83 @@ export default function Analytics() {
       {loading ? (
         <p className="text-app-ink-soft">Loading…</p>
       ) : entries.length === 0 ? (
-        <div className="flex flex-col items-start gap-3 rounded-2xl border border-dashed border-app-border p-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <BarChart3 className="size-5 shrink-0 text-app-link" aria-hidden="true" />
-            <p className="text-app-ink-soft">Log some resource usage first — trends build up as entries come in.</p>
-          </div>
-          <Link
-            to="/resources"
-            className="shrink-0 rounded text-sm font-semibold text-app-link underline-offset-4 hover:text-app-heading hover:underline"
-          >
-            Go to Resource Tracking
-          </Link>
-        </div>
+        <EmptyState
+          icon={BarChart3}
+          color={RESOURCE_TYPE_COLORS.ENERGY}
+          title="No trends yet"
+          description="Log some resource usage first — trends build up as entries come in."
+          action={
+            <Link
+              to="/resources"
+              className="shrink-0 rounded text-sm font-semibold text-app-link underline-offset-4 hover:text-app-heading hover:underline"
+            >
+              Go to Resource Tracking
+            </Link>
+          }
+        />
       ) : (
         <>
-          <div className="grid gap-4 lg:grid-cols-5">
-            <div className="rounded-2xl border border-app-border/70 bg-app-surface/80 p-5 shadow-card lg:col-span-3">
-              <p className="text-sm font-semibold tracking-[0.08em] text-app-ink-soft uppercase">
-                Carbon impact over time
-              </p>
-              <p className="mt-1 font-display text-2xl font-medium text-app-heading">{formatCo2e(totalCo2eKg)}</p>
-              <p className="text-sm text-app-ink-soft">total estimated across {carbonTrend.length} month(s)</p>
-              {carbonTrend.some((point) => point.value > 0) ? (
-                <TrendChart points={carbonTrend} tone={theme} unit="kg CO₂e" className="mt-3" />
-              ) : (
-                <p className="mt-3 flex items-center gap-1.5 text-sm text-app-ink-soft">
-                  <Info className="size-3.5 shrink-0" aria-hidden="true" />
-                  No fuel, energy, fertilizer or pesticide entries yet — see the Carbon Calculator for details.
-                </p>
-              )}
-            </div>
+          <div className="relative overflow-hidden rounded-2xl border border-forest-700/60 shadow-card">
+            <div
+              className="pointer-events-none absolute inset-0"
+              style={{ background: 'radial-gradient(90% 90% at 0% 0%, rgba(91,156,95,0.16), transparent 60%)' }}
+              aria-hidden="true"
+            />
+            <ContourLines className="pointer-events-none absolute inset-0 size-full opacity-50" />
 
-            <div className="rounded-2xl border border-app-border/70 bg-app-surface/80 p-5 shadow-card lg:col-span-2">
-              <p className="text-sm font-semibold tracking-[0.08em] text-app-ink-soft uppercase">Carbon sources</p>
-              {sourceRows.length > 0 ? (
-                <div className="mt-3 flex items-center justify-center gap-4">
-                  <DonutChart
-                    segments={sourceRows.map((row) => ({
-                      label: row.label,
-                      value: row.co2eKg,
-                      color: CARBON_TYPE_COLORS[row.type as keyof typeof CARBON_TYPE_COLORS],
-                    }))}
-                    centerValue={`${sourceRows.length}`}
-                    centerCaption={sourceRows.length === 1 ? 'source' : 'sources'}
-                    tone={theme}
-                    size={128}
-                    className="shrink-0"
-                  />
-                  <ul className="flex min-w-0 flex-col gap-1.5">
-                    {sourceRows.map((row) => (
-                      <li key={row.type} className="flex items-center gap-2 text-sm">
-                        <span
-                          className="size-2.5 shrink-0 rounded-full"
-                          style={{ backgroundColor: CARBON_TYPE_COLORS[row.type as keyof typeof CARBON_TYPE_COLORS] }}
-                          aria-hidden="true"
-                        />
-                        <span className="truncate text-app-ink-soft">{row.label}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : (
-                <p className="mt-3 flex items-center gap-1.5 text-sm text-app-ink-soft">
-                  <Info className="size-3.5 shrink-0" aria-hidden="true" />
-                  No carbon-relevant entries yet.
+            <div className="relative grid lg:grid-cols-5">
+              <div className="p-5 sm:p-6 lg:col-span-3">
+                <p className="text-xs font-semibold tracking-[0.08em] text-moss-300 uppercase">
+                  Carbon impact over time
                 </p>
-              )}
+                <p className="mt-1 font-display text-2xl font-medium text-bone-50">{formatCo2e(totalCo2eKg)}</p>
+                <p className="text-sm text-moss-300">total estimated across {carbonTrend.length} month(s)</p>
+                {carbonTrend.some((point) => point.value > 0) ? (
+                  <TrendChart points={carbonTrend} tone="dark" unit="kg CO₂e" className="mt-3" />
+                ) : (
+                  <p className="mt-3 flex items-center gap-1.5 text-sm text-moss-300">
+                    <Info className="size-3.5 shrink-0" aria-hidden="true" />
+                    No fuel, energy, fertilizer or pesticide entries yet — see the Carbon Calculator for details.
+                  </p>
+                )}
+              </div>
+
+              <div className="border-t border-white/10 p-5 sm:p-6 lg:col-span-2 lg:border-t-0 lg:border-l">
+                <p className="text-xs font-semibold tracking-[0.08em] text-moss-300 uppercase">Carbon sources</p>
+                {sourceRows.length > 0 ? (
+                  <div className="mt-3 flex items-center justify-center gap-4">
+                    <DonutChart
+                      segments={sourceRows.map((row) => ({
+                        label: row.label,
+                        value: row.co2eKg,
+                        color: RESOURCE_TYPE_COLORS[row.type],
+                      }))}
+                      centerValue={`${sourceRows.length}`}
+                      centerCaption={sourceRows.length === 1 ? 'source' : 'sources'}
+                      tone="dark"
+                      size={128}
+                      className="shrink-0"
+                    />
+                    <ul className="flex min-w-0 flex-col gap-1.5">
+                      {sourceRows.map((row) => (
+                        <li key={row.type} className="flex items-center gap-2 text-sm">
+                          <span
+                            className="size-2.5 shrink-0 rounded-full"
+                            style={{ backgroundColor: RESOURCE_TYPE_COLORS[row.type] }}
+                            aria-hidden="true"
+                          />
+                          <span className="truncate text-moss-300">{row.label}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : (
+                  <p className="mt-3 flex items-center gap-1.5 text-sm text-moss-300">
+                    <Info className="size-3.5 shrink-0" aria-hidden="true" />
+                    No carbon-relevant entries yet.
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
@@ -123,10 +137,15 @@ export default function Analytics() {
               <div className="grid gap-4 sm:grid-cols-2">
                 {resourceTrends.map((trend) => {
                   const Icon = RESOURCE_TYPE_ICONS[trend.type]
+                  const color = RESOURCE_TYPE_COLORS[trend.type]
                   return (
-                    <div key={trend.type} className="rounded-2xl border border-app-border/70 bg-app-surface/70 p-4">
+                    <div
+                      key={trend.type}
+                      className="rounded-2xl border border-app-border/70 border-l-[3px] bg-app-surface/70 p-4 shadow-card transition-transform hover:-translate-y-0.5"
+                      style={{ borderLeftColor: color }}
+                    >
                       <div className="flex items-center gap-2.5">
-                        <span className="grid size-9 place-items-center rounded-lg border border-app-border bg-app-chip text-app-link">
+                        <span className="grid size-9 place-items-center rounded-lg text-white" style={{ backgroundColor: color }}>
                           <Icon className="size-4.5" aria-hidden="true" />
                         </span>
                         <div>

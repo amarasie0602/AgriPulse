@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { MapPin, Ruler, Sprout } from 'lucide-react'
 import { Alert } from '@/components/ui/Alert'
+import { AerialFieldBackdrop } from '@/components/layout/AerialFieldBackdrop'
 import { Button } from '@/components/ui/Button'
 import { ChipInput } from '@/components/ui/ChipInput'
 import { TextField } from '@/components/ui/TextField'
@@ -82,12 +83,43 @@ export default function FarmProfile() {
 
   return (
     <div className="animate-slide-up max-w-2xl space-y-8">
-      <div>
-        <h1 className="font-display text-3xl leading-tight font-medium tracking-tight text-app-heading">
-          Farm Profile
-        </h1>
-        <p className="mt-1.5 text-app-ink-soft">This powers the modules being built next — keep it up to date.</p>
-      </div>
+      {profile?.farmName ? (
+        <div className="relative overflow-hidden rounded-2xl border border-forest-700/60 shadow-card">
+          <AerialFieldBackdrop className="absolute inset-0 size-full" />
+          <div className="relative p-6 sm:p-8">
+            <p className="text-xs font-semibold tracking-[0.08em] text-moss-300 uppercase">Digital farm identity</p>
+            <h1 className="mt-1 font-display text-2xl leading-tight font-medium tracking-tight text-bone-50 sm:text-3xl">
+              {profile.farmName}
+            </h1>
+            {(profile.location || profile.farmSizeHectares) && (
+              <p className="mt-1.5 flex items-center gap-1.5 text-sm text-moss-300">
+                <MapPin className="size-4 shrink-0" aria-hidden="true" />
+                {profile.location}
+                {profile.farmSizeHectares ? ` · ${profile.farmSizeHectares} ha` : ''}
+              </p>
+            )}
+            {profile.cropTypes.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-1.5">
+                {profile.cropTypes.map((crop) => (
+                  <span
+                    key={crop}
+                    className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-xs font-medium text-bone-50 backdrop-blur-sm"
+                  >
+                    {crop}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div>
+          <h1 className="font-display text-3xl leading-tight font-medium tracking-tight text-app-heading">
+            Farm Profile
+          </h1>
+          <p className="mt-1.5 text-app-ink-soft">This powers the modules being built next — keep it up to date.</p>
+        </div>
+      )}
 
       {error && (
         <Alert tone="error" surface={theme}>
@@ -95,7 +127,15 @@ export default function FarmProfile() {
         </Alert>
       )}
 
-      <form onSubmit={handleSubmit} noValidate className="space-y-5 rounded-2xl border border-app-border/70 bg-app-surface/80 p-6 shadow-card">
+      {profile?.farmName && (
+        <h2 className="text-sm font-semibold tracking-[0.08em] text-app-ink-soft uppercase">Edit details</h2>
+      )}
+
+      <form
+        onSubmit={handleSubmit}
+        noValidate
+        className="space-y-5 rounded-2xl border border-app-border/70 border-l-[3px] border-l-moss-400 bg-app-surface/80 p-6 shadow-card"
+      >
         <TextField
           label="Farm Name"
           tone={theme}
