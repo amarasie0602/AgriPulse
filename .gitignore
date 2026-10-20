@@ -4,3 +4,10 @@ dist
 .env.*
 !.env.example
 .DS_Store
+
+# Local source snapshots (may contain private project files)
+.backups/
+
+# Local browser verification artifacts
+.qa/
+video/out/

@@ -45,6 +45,7 @@ export type ResourceSummary = Partial<Record<ResourceType, number>>
 export interface ResourceService {
   list(): Promise<ResourceEntry[]>
   create(input: CreateResourceEntryInput): Promise<ResourceEntry>
+  update(id: string, input: CreateResourceEntryInput): Promise<ResourceEntry>
   remove(id: string): Promise<void>
   summary(): Promise<ResourceSummary>
 }

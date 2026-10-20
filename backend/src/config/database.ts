@@ -5,7 +5,7 @@ import { env } from './env';
 export async function connectDatabase(): Promise<void> {
   mongoose.set('strictQuery', true);
   await mongoose.connect(env.MONGODB_URI);
-  console.log(`Connected to MongoDB at ${env.MONGODB_URI}`);
+  console.log('Connected to the configured MongoDB database.');
 }
 
 export async function disconnectDatabase(): Promise<void> {

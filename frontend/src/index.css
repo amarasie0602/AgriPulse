@@ -1,4 +1,7 @@
 @import 'tailwindcss';
+@import './workspace.css';
+@import './reference.css';
+@import './crops.css';
 
 /*
  * AgriPulse design tokens.
@@ -120,19 +123,6 @@
  */
 :root[data-theme='dark'] {
   color-scheme: dark;
-
-  --color-app-bg: var(--color-forest-950);
-  --color-app-surface: var(--color-forest-900);
-  --color-app-chip: var(--color-forest-800);
-  --color-app-border: var(--color-forest-700);
-  --color-app-ink: var(--color-bone-50);
-  --color-app-ink-soft: var(--color-moss-300);
-  --color-app-heading: var(--color-bone-50);
-  --color-app-link: var(--color-wheat-300);
-  --color-app-accent: var(--color-wheat-500);
-  --color-app-accent-contrast: var(--color-forest-950);
-  --color-app-danger-bg: rgb(244 63 94 / 0.14);
-  --color-app-danger-text: #fda4af;
 }
 
 @layer base {

@@ -5,7 +5,9 @@ import { env } from './config/env';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { authRouter } from './modules/auth/auth.routes';
 import { resourcesRouter } from './modules/resources/resources.routes';
+import { farmsRouter } from './modules/farms/farms.routes';
 import { usersRouter } from './modules/users/users.routes';
+import { cropsRouter } from './modules/crops/crops.routes';
 
 export function createApp(): Express {
   const app = express();
@@ -21,6 +23,8 @@ export function createApp(): Express {
   app.use('/auth', authRouter);
   app.use('/users', usersRouter);
   app.use('/resources', resourcesRouter);
+  app.use('/farms', farmsRouter);
+  app.use('/crops', cropsRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

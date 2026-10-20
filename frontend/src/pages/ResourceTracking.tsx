@@ -1,5 +1,7 @@
+import { PageHeader, PageAction, WorkspaceNote } from '@/components/ui/Workspace'
 import { useState, type FormEvent } from 'react'
-import { Bug, Calendar, Droplets, Fuel, Package, Plus, Sprout, Trash2, Zap, type LucideIcon } from 'lucide-react'
+import { Bug, Calendar, Droplets, Fuel, Package, Plus, Pencil, Sprout, Trash2, Zap, type LucideIcon } from 'lucide-react'
+import { resourceService } from '@/services/resourceService'
 import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
@@ -40,8 +42,15 @@ function emptyForm(): FormState {
 export default function ResourceTracking() {
   useDocumentTitle('Resource Tracking')
   const { theme } = useTheme()
-  const { entries, summary, loading, error, addEntry, removeEntry } = useResourceEntries()
+  const { entries, loading, error, addEntry, removeEntry, refresh } = useResourceEntries()
 
+  const [editing, setEditing] = useState<string | null>(null)
+  const [query, setQuery] = useState('')
+  const [typeFilter, setTypeFilter] = useState('')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
+  const [order, setOrder] = useState('newest')
+  const [saved, setSaved] = useState('')
   const [form, setForm] = useState<FormState>(emptyForm())
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -58,6 +67,7 @@ export default function ResourceTracking() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (submitting) return
 
     const quantity = Number(form.quantity)
     if (!form.quantity.trim() || Number.isNaN(quantity) || quantity <= 0) {
@@ -76,13 +86,16 @@ export default function ResourceTracking() {
     setSubmitting(true)
     setFormError(null)
     try {
-      await addEntry({
+      const input = {
         resourceType: form.resourceType,
         quantity,
         unit: form.unit.trim(),
         date: form.date,
         notes: form.notes.trim() || undefined,
-      })
+      }
+      if (editing) { await resourceService.update(editing, input); await refresh() } else await addEntry(input)
+      setEditing(null)
+      setSaved('Resource record saved.')
       setForm(emptyForm())
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Could not save this entry. Please try again.')
@@ -92,39 +105,43 @@ export default function ResourceTracking() {
   }
 
   async function handleRemove(id: string) {
+    if (!window.confirm('Permanently delete this resource entry?')) return
     setRemovingId(id)
     try {
       await removeEntry(id)
-    } catch {
-      // The list simply won't change; useResourceEntries surfaces load errors separately.
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Could not delete this entry. Please try again.')
     } finally {
       setRemovingId(null)
     }
   }
 
-  const summaryTypes = RESOURCE_TYPES.filter((type) => summary[type] !== undefined)
+  const visibleEntries = entries.filter(entry => (!typeFilter || entry.resourceType === typeFilter) && (!fromDate || entry.date.slice(0,10) >= fromDate) && (!toDate || entry.date.slice(0,10) <= toDate) && (entry.notes + ' ' + RESOURCE_TYPE_LABELS[entry.resourceType] + ' ' + entry.unit).toLowerCase().includes(query.trim().toLowerCase())).sort((a,b) => order === 'oldest' ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date))
+  const unitGroups = new Map<string, { type: ResourceType; unit: string; quantity: number }>()
+  for (const entry of entries) {
+    const key = entry.resourceType + ':' + entry.unit
+    const group = unitGroups.get(key) ?? { type: entry.resourceType, unit: entry.unit, quantity: 0 }
+    group.quantity += entry.quantity; unitGroups.set(key, group)
+  }
+  const summaries = [...unitGroups.values()]
 
   return (
-    <div className="animate-slide-up space-y-8">
-      <div>
-        <h1 className="font-display text-3xl leading-tight font-medium tracking-tight text-app-heading sm:text-4xl">
-          Resource Tracking
-        </h1>
-        <p className="mt-1.5 text-app-ink-soft">Log water, energy, and input usage to build a picture over time.</p>
-      </div>
+    <div className="app-page resourcetracking-page animate-slide-up space-y-8">
+      <PageHeader eyebrow="FARM OPERATIONS" title={`Resource tracking`} description="Keep every input in view. Record usage and follow your farm's activity." action={<PageAction to="/analytics">View analytics</PageAction>} />
 
+      {saved && <Alert tone="success" surface={theme}>{saved}</Alert>}
       {error && (
         <Alert tone="error" surface={theme}>
           {error}
         </Alert>
       )}
 
-      {summaryTypes.length > 0 && (
+      {summaries.length > 0 && (
         <div className="grid gap-3 sm:grid-cols-3">
-          {summaryTypes.map((type) => {
+          {summaries.map(({ type, unit, quantity }) => {
             const Icon = RESOURCE_TYPE_ICONS[type]
             return (
-              <div key={type} className="rounded-2xl border border-app-border/70 bg-app-surface/70 p-4">
+              <div key={type + unit} className="rounded-2xl border border-app-border/70 bg-app-surface/70 p-4">
                 <div className="flex items-center gap-2.5">
                   <span className="grid size-9 place-items-center rounded-lg border border-app-border bg-app-chip text-app-link">
                     <Icon className="size-4.5" aria-hidden="true" />
@@ -132,7 +149,7 @@ export default function ResourceTracking() {
                   <p className="text-sm font-semibold text-app-ink-soft">{RESOURCE_TYPE_LABELS[type]}</p>
                 </div>
                 <p className="mt-2 font-display text-2xl font-medium text-app-heading">
-                  {summary[type]} <span className="text-base font-sans font-medium text-app-ink-soft">total</span>
+                  {new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(quantity)} {unit} <span className="text-base font-sans font-medium text-app-ink-soft">in recent records</span>
                 </p>
               </div>
             )
@@ -140,11 +157,12 @@ export default function ResourceTracking() {
         </div>
       )}
 
-      <form
+      <div className="resource-workspace"><WorkspaceNote title="Every input tells a story">Record water, energy, fuel, and crop inputs as you use them. Your log automatically powers analytics and carbon estimates.</WorkspaceNote><form
         onSubmit={handleSubmit}
         noValidate
         className="grid gap-4 rounded-2xl border border-app-border/70 bg-app-surface/80 p-6 shadow-card sm:grid-cols-2"
       >
+        <div className="form-section-heading sm:col-span-2"><span className="eyebrow">{editing ? 'EDIT RECORD' : 'NEW ENTRY'}</span><h2>{editing ? 'Edit resource usage' : 'Record resource usage'}</h2><p>Enter the quantity and date for this resource.</p></div>
         <Select
           label="Resource Type"
           tone={theme}
@@ -216,17 +234,19 @@ export default function ResourceTracking() {
             type="submit"
             variant={theme === 'dark' ? 'gold' : 'primary'}
             loading={submitting}
-            loadingText="Adding…"
+            loadingText="Adding..."
             leftIcon={!submitting ? <Plus className="size-4.5" aria-hidden="true" /> : undefined}
           >
-            Add entry
-          </Button>
+            {editing ? 'Save entry' : 'Add entry'}
+          </Button>{editing && <Button variant="secondary" onClick={() => { setEditing(null); setForm(emptyForm()); setFormError(null) }}>Cancel edit</Button>}
         </div>
-      </form>
+      </form></div>
 
       <div>
-        <h2 className="mb-3 text-sm font-semibold tracking-[0.08em] text-app-ink-soft uppercase">Recent entries</h2>
+        <h2 className="mb-3 text-sm font-semibold tracking-[0.08em] text-app-ink-soft uppercase">Recent entries</h2><p className="text-sm text-app-ink-soft mb-4">Latest 200 records. Summaries keep different units separate.</p>
 
+        <div className="resource-filters"><TextField tone={theme} label="Search records" value={query} onChange={event => setQuery(event.target.value)} type="search" /><Select tone={theme} label="Resource category" value={typeFilter} onChange={event => setTypeFilter(event.target.value)}><option value="">All resources</option>{RESOURCE_TYPES.map(type => <option key={type} value={type}>{RESOURCE_TYPE_LABELS[type]}</option>)}</Select><TextField tone={theme} label="From date" type="date" value={fromDate} onChange={event => setFromDate(event.target.value)} /><TextField tone={theme} label="To date" type="date" min={fromDate} value={toDate} onChange={event => setToDate(event.target.value)} /><Select tone={theme} label="Record order" value={order} onChange={event => setOrder(event.target.value)}><option value="newest">Newest first</option><option value="oldest">Oldest first</option></Select></div>
+        {!loading && entries.length > 0 && !visibleEntries.length && <p>No matching resource records.</p>}
         {loading ? (
           <p className="text-app-ink-soft">Loading…</p>
         ) : entries.length === 0 ? (
@@ -235,7 +255,7 @@ export default function ResourceTracking() {
           </p>
         ) : (
           <ul className="flex flex-col gap-2">
-            {entries.map((entry) => {
+            {visibleEntries.map((entry) => {
               const Icon = RESOURCE_TYPE_ICONS[entry.resourceType]
               return (
                 <li
@@ -255,6 +275,7 @@ export default function ResourceTracking() {
                       {entry.notes ? ` · ${entry.notes}` : ''}
                     </p>
                   </div>
+                  <button type="button" className="icon-action" aria-label="Edit entry" onClick={() => { setEditing(entry.id); setForm({ resourceType: entry.resourceType, quantity: String(entry.quantity), unit: entry.unit, date: entry.date.slice(0,10), notes: entry.notes ?? '' }); setFormError(null); setSaved(''); document.querySelector('form')?.scrollIntoView({ block: 'start', behavior: 'instant' }) }}><Pencil size={18} /></button>
                   <button
                     type="button"
                     onClick={() => handleRemove(entry.id)}

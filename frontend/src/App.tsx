@@ -3,6 +3,8 @@ import { DashboardShell } from '@/components/layout'
 import Analytics from '@/pages/Analytics'
 import CarbonCalculator from '@/pages/CarbonCalculator'
 import Dashboard from '@/pages/Dashboard'
+import FarmManagement from '@/pages/FarmManagement'
+import CropManagement from '@/pages/CropManagement'
 import FarmProfile from '@/pages/FarmProfile'
 import Login from '@/pages/Login'
 import Register from '@/pages/Register'
@@ -23,6 +25,8 @@ export default function App() {
           <Route path="/resources" element={<ResourceTracking />} />
           <Route path="/carbon" element={<CarbonCalculator />} />
           <Route path="/analytics" element={<Analytics />} />
+          <Route path="/farms" element={<FarmManagement />} />
+          <Route path="/crops" element={<CropManagement />} />
           <Route path="/profile" element={<FarmProfile />} />
         </Route>
       </Route>
