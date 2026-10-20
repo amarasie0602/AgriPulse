@@ -1,3 +1,4 @@
+import { PageHeader, PageAction, WorkspaceNote } from '@/components/ui/Workspace'
 import { useState, type FormEvent } from 'react'
 import { Bug, Calendar, Droplets, Fuel, Package, Plus, Sprout, Trash2, Zap, type LucideIcon } from 'lucide-react'
 import { Alert } from '@/components/ui/Alert'
@@ -58,6 +59,7 @@ export default function ResourceTracking() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (submitting) return
 
     const quantity = Number(form.quantity)
     if (!form.quantity.trim() || Number.isNaN(quantity) || quantity <= 0) {
@@ -95,8 +97,8 @@ export default function ResourceTracking() {
     setRemovingId(id)
     try {
       await removeEntry(id)
-    } catch {
-      // The list simply won't change; useResourceEntries surfaces load errors separately.
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Could not delete this entry. Please try again.')
     } finally {
       setRemovingId(null)
     }
@@ -105,13 +107,8 @@ export default function ResourceTracking() {
   const summaryTypes = RESOURCE_TYPES.filter((type) => summary[type] !== undefined)
 
   return (
-    <div className="animate-slide-up space-y-8">
-      <div>
-        <h1 className="font-display text-3xl leading-tight font-medium tracking-tight text-app-heading sm:text-4xl">
-          Resource Tracking
-        </h1>
-        <p className="mt-1.5 text-app-ink-soft">Log water, energy, and input usage to build a picture over time.</p>
-      </div>
+    <div className="app-page resourcetracking-page animate-slide-up space-y-8">
+      <PageHeader eyebrow="FARM OPERATIONS" title={`Resource tracking`} description="Keep every input in view. Record usage and follow your farm's activity." action={<PageAction to="/analytics">View analytics</PageAction>} />
 
       {error && (
         <Alert tone="error" surface={theme}>
@@ -140,11 +137,12 @@ export default function ResourceTracking() {
         </div>
       )}
 
-      <form
+      <div className="resource-workspace"><WorkspaceNote title="Every input tells a story">Record water, energy, fuel, and crop inputs as you use them. Your log automatically powers analytics and carbon estimates.</WorkspaceNote><form
         onSubmit={handleSubmit}
         noValidate
         className="grid gap-4 rounded-2xl border border-app-border/70 bg-app-surface/80 p-6 shadow-card sm:grid-cols-2"
       >
+        <div className="form-section-heading sm:col-span-2"><span className="eyebrow">NEW ENTRY</span><h2>Record resource usage</h2><p>Enter the quantity and date for this resource.</p></div>
         <Select
           label="Resource Type"
           tone={theme}
@@ -216,13 +214,13 @@ export default function ResourceTracking() {
             type="submit"
             variant={theme === 'dark' ? 'gold' : 'primary'}
             loading={submitting}
-            loadingText="Adding…"
+            loadingText="Adding..."
             leftIcon={!submitting ? <Plus className="size-4.5" aria-hidden="true" /> : undefined}
           >
             Add entry
           </Button>
         </div>
-      </form>
+      </form></div>
 
       <div>
         <h2 className="mb-3 text-sm font-semibold tracking-[0.08em] text-app-ink-soft uppercase">Recent entries</h2>

@@ -173,3 +173,71 @@ router.get('/admin', requireAuth, requireRole('ADMIN'), handler);
 ## CORS
 
 `app.ts` allows only `FRONTEND_URL` (default `http://localhost:5173`, the Vite dev server). Update it in `.env` if the frontend runs elsewhere.
+
+## Farm Management
+
+Farm Management is a separate workspace at `/farms`. Farm Profile continues to edit the
+account's default farm through `/users/me`. The new `Farm` collection is additive: it
+requires no migration and does not copy or modify existing default-profile data.
+Resource logs remain scoped to the user; this change does not reassign them to farms.
+Carbon and analytics calculations retain their existing resource inputs and factors.
+
+All `/farms` requests require `Authorization: Bearer <token>`:
+
+| Method | Path | Behavior |
+| --- | --- | --- |
+| GET | `/farms` | Return the authenticated owner's farms, newest first |
+| POST | `/farms` | Create a farm; return `201` and the saved farm |
+| GET | `/farms/:id` | Return one owned farm |
+| PATCH | `/farms/:id` | Update only supplied fields; return the saved farm |
+| DELETE | `/farms/:id` | Delete an owned farm; return `204` |
+
+Create body:
+
+```json
+{
+  "farmName": "Green Valley Farm",
+  "location": "Kandy, Sri Lanka",
+  "farmSizeHectares": 12.5,
+  "cropTypes": ["Rice", "Tea"]
+}
+```
+
+Names and locations are required, trimmed, and limited to 80 and 120 characters.
+Area is a finite number greater than zero and at most 1,000,000 hectares. Crop types
+are optional on creation (default `[]`); at most 12 names, each 1–40 characters.
+Updates require at least one known field. Omitted fields remain unchanged.
+Unknown fields, including `userId` and invented status properties, are rejected.
+
+Responses include `id`, the four farm fields, `createdAt`, and `updatedAt`. They do
+not expose owner IDs. Ownership comes from the verified JWT, never the request body.
+Every record operation filters by both owner and farm ID. Another owner's record
+and a missing record both return `404`; malformed IDs and invalid bodies return `400`.
+The `farms` collection has a compound index on `{ userId: 1, createdAt: -1 }`.
+
+The client searches names, locations, and crops and filters/sorts the owner's loaded
+farm records. There is no artificial farm status because the project has no status
+business rules. Farm records are stored through the API in MongoDB, never in browser
+local storage. Demo authentication displays an explanatory error for Farm Management.
+
+### Verification
+
+From `backend/`:
+
+```powershell
+npm.cmd run build
+npm.cmd test
+# Opt into integration tests against a separate local verification database.
+$env:TEST_MONGODB_URI='mongodb://127.0.0.1:27018/agripulse_verification'
+npm.cmd test
+```
+
+Without `TEST_MONGODB_URI`, validation tests run and database integration tests skip.
+Integration tests create unique test accounts and remove only their own records in
+cleanup. They never drop databases or collections. Tests cover JWT requirements,
+CRUD persistence, strict validation, partial-update preservation, cross-owner access,
+and continued profile/resource behavior.
+
+From `frontend/`, run `npm.cmd run build`. Docker still uses the existing environment
+files, MongoDB service, and persistent volume. Rebuild the frontend and backend with
+`docker compose up --build -d` to serve source changes in the existing stack.

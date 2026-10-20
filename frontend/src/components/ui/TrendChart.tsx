@@ -53,7 +53,7 @@ export function TrendChart({ points, tone = 'light', unit, className, compact = 
   return (
     <div className={className}>
       <svg
-        viewBox={`0 0 ${WIDTH} ${HEIGHT - bottomPad + (compact ? 4 : 0)}`}
+        viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         preserveAspectRatio="xMidYMid meet"
         className="block w-full h-full"
         role="img"
@@ -66,11 +66,16 @@ export function TrendChart({ points, tone = 'light', unit, className, compact = 
           </linearGradient>
         </defs>
 
+        {!compact && [0, 0.25, 0.5, 0.75, 1].map((fraction) => (
+          <g key={fraction}>
+            <line x1={PAD_X} x2={WIDTH - PAD_X} y1={PAD_TOP + plotHeight * fraction} y2={PAD_TOP + plotHeight * fraction} stroke={labelColor} strokeOpacity="0.12" strokeDasharray="3 5" />
+          </g>
+        ))}
         <path d={areaPath} fill={`url(#${gradientId})`} />
         <path d={linePath} fill="none" stroke={lineColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
 
         {coords.map((c) => (
-          <circle key={c.index} cx={c.x} cy={c.y} r={compact ? 2 : 3} fill={lineColor} />
+          <circle key={c.index} cx={c.x} cy={c.y} r={compact ? 2 : 3} fill={lineColor}><title>{`${c.label}: ${c.value}${unit ? ` ${unit}` : ''}`}</title></circle>
         ))}
 
         {!compact &&

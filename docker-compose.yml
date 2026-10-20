@@ -21,7 +21,7 @@ services:
       MONGODB_URI: mongodb://mongo:27017/agripulse
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env — see .env.example}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5174}
       PORT: 3000
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
     depends_on:
@@ -46,7 +46,7 @@ services:
       backend:
         condition: service_healthy
     ports:
-      - "5173:80"
+      - "5174:80"
 
 volumes:
   mongo-data:

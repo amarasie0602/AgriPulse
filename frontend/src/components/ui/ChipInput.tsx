@@ -12,6 +12,7 @@ interface ChipInputProps {
   /** `dark` is for glass panels over a dark background. */
   tone?: 'light' | 'dark'
   maxItems?: number
+  maxLength?: number
 }
 
 /** A labelled list of short tags (e.g. crop types) backed by a single text input. */
@@ -24,6 +25,7 @@ export function ChipInput({
   disabled,
   tone = 'light',
   maxItems = 12,
+  maxLength = 40,
 }: ChipInputProps) {
   const [draft, setDraft] = useState('')
   const inputId = useId()
@@ -91,6 +93,7 @@ export function ChipInput({
           <input
             id={inputId}
             type="text"
+            maxLength={maxLength}
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             onKeyDown={handleKeyDown}

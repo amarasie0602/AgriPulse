@@ -1,3 +1,4 @@
+import { PageHeader, PageAction, MetricCard } from '@/components/ui/Workspace'
 import { Bug, Droplets, Fuel, Info, Package, Sprout, Zap, type LucideIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Alert } from '@/components/ui/Alert'
@@ -23,15 +24,8 @@ export default function CarbonCalculator() {
   const countedRows = estimate.rows.filter((row) => row.matchedQuantity > 0)
 
   return (
-    <div className="animate-slide-up max-w-3xl space-y-8">
-      <div>
-        <h1 className="font-display text-3xl leading-tight font-medium tracking-tight text-app-heading sm:text-4xl">
-          Carbon Calculator
-        </h1>
-        <p className="mt-1.5 text-app-ink-soft">
-          An estimate of your farm's CO₂e footprint, calculated from your Resource Tracking log.
-        </p>
-      </div>
+    <div className="app-page carboncalculator-page animate-slide-up space-y-8">
+      <PageHeader eyebrow="ENVIRONMENTAL IMPACT" title={`Carbon calculator`} description="Understand where your emissions come from and what contributes most." action={<PageAction to="/resources">Manage resource log</PageAction>} />
 
       {error && (
         <Alert tone="error" surface={theme}>
@@ -39,6 +33,7 @@ export default function CarbonCalculator() {
         </Alert>
       )}
 
+      <div className="metrics-grid"><MetricCard icon={Sprout} label="Estimated footprint" value={loading ? '...' : formatCo2e(estimate.totalCo2eKg)} detail="Illustrative estimate across all logged entries" accent /><MetricCard icon={Fuel} label="Emission sources" value={loading ? '...' : countedRows.length} detail="Categories contributing to your footprint" /><MetricCard icon={Package} label="Resource records" value={loading ? '...' : entries.length} detail="Linked automatically from your resource log" /></div>
       <Alert tone="info" surface={theme}>
         These figures use standard, illustrative emission factors — a helpful guide, not a certified
         calculation. Water and other/uncategorized usage aren't counted toward the total below.
@@ -58,20 +53,10 @@ export default function CarbonCalculator() {
         </div>
       ) : (
         <>
-          <div className="rounded-2xl border border-app-border/70 bg-app-surface/80 p-6 shadow-card">
-            <p className="text-sm font-semibold tracking-[0.08em] text-app-ink-soft uppercase">
-              Estimated impact
-            </p>
-            <p className="mt-2 font-display text-4xl font-medium text-app-heading sm:text-5xl">
-              {formatCo2e(estimate.totalCo2eKg)}
-            </p>
-            <p className="mt-1 text-sm text-app-ink-soft">{estimate.totalCo2eKg.toFixed(1)} kg CO₂e total</p>
-          </div>
-
           {countedRows.length > 0 ? (
             <div>
               <h2 className="mb-3 text-sm font-semibold tracking-[0.08em] text-app-ink-soft uppercase">Breakdown</h2>
-              <ul className="flex flex-col gap-2">
+              <ul className="emissions-list flex flex-col gap-2">
                 {countedRows.map((row) => {
                   const Icon = RESOURCE_TYPE_ICONS[row.type]
                   return (
@@ -97,6 +82,7 @@ export default function CarbonCalculator() {
                           </p>
                         )}
                       </div>
+                      <div className="emission-share"><span>{estimate.totalCo2eKg > 0 ? Math.round(row.co2eKg / estimate.totalCo2eKg * 100) : 0}%</span><div><i style={{ width: `${estimate.totalCo2eKg > 0 ? row.co2eKg / estimate.totalCo2eKg * 100 : 0}%` }} /></div></div>
                       <p className="shrink-0 font-display text-lg font-medium text-app-heading">
                         {row.co2eKg.toFixed(1)} <span className="font-sans text-sm font-medium">kg</span>
                       </p>

@@ -1,3 +1,4 @@
+import { PageHeader, PageAction, MetricCard } from '@/components/ui/Workspace'
 import { BarChart3, Bug, Droplets, Fuel, Info, Package, Sprout, Zap, type LucideIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Alert } from '@/components/ui/Alert'
@@ -26,14 +27,10 @@ export default function Analytics() {
   const totalCo2eKg = carbonTrend.reduce((sum, point) => sum + point.value, 0)
 
   return (
-    <div className="animate-slide-up max-w-4xl space-y-8">
-      <div>
-        <h1 className="font-display text-3xl leading-tight font-medium tracking-tight text-app-heading sm:text-4xl">
-          Analytics
-        </h1>
-        <p className="mt-1.5 text-app-ink-soft">Trends across your resource usage and estimated carbon impact.</p>
-      </div>
+    <div className="app-page analytics-page animate-slide-up space-y-8">
+      <PageHeader eyebrow="MEASURE & UNDERSTAND" title={`Farm analytics`} description="Turn everyday resource records into a clearer picture of your farm." action={<PageAction to="/resources">Log resource usage</PageAction>} />
 
+      <div className="metrics-grid"><MetricCard icon={Sprout} label="Estimated emissions" value={loading ? '...' : formatCo2e(totalCo2eKg)} detail="Across the displayed months" accent /><MetricCard icon={BarChart3} label="Tracked resources" value={loading ? '...' : resourceTrends.length} detail="Resource categories with trend data" /><MetricCard icon={Droplets} label="Resource records" value={loading ? '...' : entries.length} detail="Your data behind the insights" /></div>
       {error && (
         <Alert tone="error" surface={theme}>
           {error}

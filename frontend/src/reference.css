@@ -1,0 +1,285 @@
+/* Reference-led botanical dashboard. Shared surfaces carry the same visual language. */
+:root {
+  --color-app-bg: #faf9f3;
+  --color-app-surface: #fffefa;
+  --color-app-chip: #f5f5eb;
+  --color-app-border: #e8e8dc;
+  --color-app-heading: #14251c;
+  --color-app-ink: #24352d;
+  --color-app-ink-soft: #68736d;
+  --color-app-link: #285e32;
+  --shadow-card: 0 3px 18px -14px #36492925;
+}
+:root[data-theme='dark'] {
+  --color-app-bg: #101d16;
+  --color-app-surface: #1a2c21;
+  --color-app-chip: #263b2b;
+  --color-app-border: #354c39;
+  --color-app-heading: #f0f4e8;
+  --color-app-ink: #e0e9d8;
+  --color-app-ink-soft: #a8b7a2;
+  --color-app-link: #bedc9e;
+}
+.desktop-sidebar, .mobile-sidebar { width: 245px; padding: 28px 15px 0; background: #173e2a; border: 0; }
+.desktop-sidebar { position: relative; }
+.sidebar-brand { padding: 3px 14px 24px; border: 0; }
+.sidebar-brand .agripulse-logo { gap: 10px; }
+.sidebar-brand .agripulse-logo > span { font-size: 26px; font-weight: 700; }
+.sidebar-brand > span { margin: 12px 0 0 55px; color: #d0dfb9; font-size: 12px; line-height: 1.65; letter-spacing: 0; }
+.desktop-sidebar nav, .mobile-sidebar nav { position: relative; z-index: 1; margin-top: 0; }
+.desktop-sidebar nav a, .mobile-sidebar nav a { padding: 13px 17px; border-radius: 10px; color: #f0f4e9; font-size: 13px; font-weight: 500; gap: 17px; border: 1px solid transparent; }
+.desktop-sidebar nav a svg, .mobile-sidebar nav a svg { width: 21px; height: 21px; color: #c7d8ae; }
+.desktop-sidebar nav a[aria-current='page'], .mobile-sidebar nav a[aria-current='page'] { background: #cce7b4; border-color: #deefcd; color: #143c23; box-shadow: 0 4px 14px #09221414; }
+.desktop-sidebar nav a[aria-current='page'] svg, .mobile-sidebar nav a[aria-current='page'] svg { color: #285c32; }
+.sidebar-tools { position: relative; z-index: 1; display: grid; gap: 6px; border-top: 1px solid #69816265; padding-top: 21px; margin: 24px 17px 16px; }
+.sidebar-tools > a, .sidebar-tools > button { display: flex; align-items: center; gap: 16px; padding: 12px 0; font-size: 13px; color: #f0f4e8; cursor: pointer; text-align: left; }
+.sidebar-tools svg { color: #c9d9b6; }
+.sidebar-tools > a:hover, .sidebar-tools > button:hover { color: #cce7b4; }
+.sidebar-landscape { position: relative; margin: auto -15px 0; min-height: 180px; flex: 1; background-image: linear-gradient(#173e2a 0%, #173e2a60 42%, #102b0c10 65%, #102b0cba 100%), url('/images/tea-landscape.png'); background-size: cover; background-position: 48% bottom; }
+.sidebar-landscape > div { position: absolute; inset: auto 22px 26px 30px; display: grid; gap: 4px; color: #f2f6df; }
+.sidebar-landscape svg { margin-bottom: 3px; color: #c5e19a; }
+.sidebar-landscape strong { font-size: 16px; font-weight: 650; }
+.sidebar-landscape span { font-size: 13px; color: #edf0c9; }
+.workspace-topbar { min-height: 65px; padding: 10px 30px; justify-content: flex-end; border-bottom: 0; background: transparent; gap: 24px; }
+.mobile-page-title { display: none; }
+.workspace-search { display: flex; align-items: center; gap: 12px; width: 390px; padding: 10px 15px; border: 1px solid var(--color-app-border); border-radius: 16px; background: color-mix(in srgb, var(--color-app-chip) 75%, transparent); color: var(--color-app-ink-soft); }
+.workspace-search input { width: 100%; min-width: 0; outline: 0; background: transparent; font-size: 12px; color: var(--color-app-ink); }
+.workspace-search:focus-within { outline: 2px solid #7fa663; outline-offset: 2px; }
+.topbar-account { display: flex; align-items: center; gap: 20px; }
+.topbar-activity { color: var(--color-app-ink-soft); padding: 5px; }
+.account-menu { position: relative; }
+.account-menu summary { display: flex; align-items: center; gap: 11px; cursor: pointer; list-style: none; font-size: 13px; font-weight: 600; }
+.account-menu summary::-webkit-details-marker { display: none; }
+.account-avatar { width: 41px; height: 41px; display: grid; place-items: center; border-radius: 50%; border: 1px solid #315b3e; background: #19472e; color: #f6f8ef; font-size: 20px; font-weight: 500; }
+.account-menu > div { position: absolute; top: calc(100% + 12px); right: 0; width: 170px; padding: 6px; z-index: 35; background: var(--color-app-surface); border: 1px solid var(--color-app-border); border-radius: 12px; box-shadow: 0 10px 30px #0a261526; }
+.account-menu > div > a, .account-menu > div > button { display: flex; align-items: center; gap: 10px; padding: 10px; width: 100%; border-radius: 7px; font-size: 12px; text-align: left; cursor: pointer; }
+.account-menu > div > a:hover, .account-menu > div > button:hover { background: var(--color-app-chip); }
+.workspace-main { padding: 0 28px 24px; }
+.workspace-footer { display: none; }
+.workspace-main > .reference-dashboard { max-width: 1600px; gap: 18px; }
+.reference-dashboard { display: flex; flex-direction: column; }
+.nature-welcome { position: relative; display: flex; align-items: center; justify-content: space-between; min-height: 105px; padding: 0 12px 12px; overflow: hidden; }
+.nature-welcome > div:first-child { position: relative; z-index: 2; }
+.nature-welcome > div:first-child > p { font-size: 16px; line-height: 1.5; color: var(--color-app-heading); }
+.nature-welcome h1 { display: flex; align-items: center; gap: 10px; margin: 0 0 4px; font-size: 34px; font-weight: 750; letter-spacing: -.9px; line-height: 1.2; color: var(--color-app-heading); }
+.nature-welcome h1 svg { color: #619c3f; }
+.nature-welcome > div:first-child > span { color: var(--color-app-ink-soft); font-size: 14px; }
+.welcome-landscape { position: absolute; bottom: 0; top: 0; right: -28px; width: 48%; border-top-left-radius: 120px; background-image: linear-gradient(90deg, var(--color-app-bg) 0%, #faf9f310 24%, #e8edda88 65%, #e8edda 100%), url('/images/tea-landscape.png'); background-position: center 52%; background-size: cover; }
+.welcome-landscape::after { content: ''; position: absolute; inset: 0; background: linear-gradient(0deg, var(--color-app-bg), transparent 45%); }
+.welcome-landscape blockquote { position: absolute; z-index: 1; top: 25px; right: 50px; font-size: 12px; line-height: 1.5; color: #1d3527; }
+.welcome-leaves { position: absolute; width: 135px; left: -65px; bottom: -30px; z-index: 1; }
+.nature-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.nature-stat { display: flex; position: relative; align-items: flex-start; gap: 16px; padding: 20px 18px; background: var(--color-app-surface); border: 1px solid var(--color-app-border); border-radius: 17px; box-shadow: var(--shadow-card); min-width: 0; transition: border-color .2s; }
+.nature-stat:hover { border-color: #a4bf8b; }
+.nature-stat > div { min-width: 0; padding-top: 6px; }
+.nature-stat-icon { display: grid; place-items: center; flex-shrink: 0; height: 54px; width: 54px; background: #edf1df; color: #4b8b31; border-radius: 20px; }
+.nature-stat-sage { background: color-mix(in srgb, #e9f1da 32%, var(--color-app-surface)); border-color: #e0e9d2; }
+.nature-stat-sage .nature-stat-icon { background: #e0efce; }
+.nature-stat-amber .nature-stat-icon { background: #fbf2d9; color: #648b37; }
+.nature-stat-moss .nature-stat-icon { background: #edf0da; }
+.nature-stat-label { display: block; color: var(--color-app-heading); font-size: 12px; font-weight: 600; line-height: 1.4; padding-right: 8px; }
+.nature-stat strong { display: block; margin-top: 5px; font-size: clamp(26px, 2.3vw, 36px); font-weight: 750; line-height: 1.25; letter-spacing: -.8px; color: var(--color-app-heading); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.nature-stat strong small { font-size: 14px; font-weight: 550; letter-spacing: -.2px; }
+.nature-stat p { margin-top: 6px; color: var(--color-app-ink-soft); font-size: 10px; line-height: 1.6; }
+.nature-stat-arrow { position: absolute; right: 15px; top: 17px; display: grid; place-items: center; width: 23px; height: 23px; border: 1px solid var(--color-app-border); border-radius: 50%; color: var(--color-app-ink-soft); }
+.nature-middle-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px; }
+.nature-card { position: relative; background: var(--color-app-surface); border: 1px solid var(--color-app-border); border-radius: 18px; padding: 20px; min-width: 0; box-shadow: var(--shadow-card); }
+.nature-card-heading { display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
+.nature-card-heading > div { flex: 1; min-width: 0; }
+.nature-heading-icon { color: #285a31; flex-shrink: 0; margin-top: 2px; }
+.reference-dashboard .nature-card h2 { font-size: 17px; font-weight: 750; letter-spacing: -.4px; line-height: 1.3; color: var(--color-app-heading); }
+.nature-card-heading p { font-size: 11px; line-height: 1.65; color: var(--color-app-ink-soft); margin-top: 3px; }
+.nature-card-heading > a { font-size: 11px; color: var(--color-app-heading); white-space: nowrap; margin-top: 5px; }
+.nature-card-heading > a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.trend-period { margin-left: auto; }
+.trend-period select { padding: 8px 9px; border: 1px solid var(--color-app-border); border-radius: 9px; font-size: 11px; background: var(--color-app-surface); color: var(--color-app-ink); max-width: 145px; }
+.resource-chart { margin-top: 12px; }
+.resource-chart > svg { display: block; width: 100%; height: auto; max-height: 220px; }
+.resource-chart-legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 16px; margin-top: 7px; }
+.resource-chart-legend li { display: inline-flex; align-items: center; gap: 8px; font-size: 10px; color: var(--color-app-ink-soft); }
+.resource-chart-legend i, .carbon-breakdown i { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.nature-chart-note { font-size: 9px; margin-top: 12px; line-height: 1.6; color: var(--color-app-ink-soft); }
+.carbon-footprint-card { overflow: hidden; }
+.carbon-visual { display: flex; align-items: center; gap: 24px; margin: 24px 0 18px; }
+.carbon-ring { position: relative; display: grid; place-items: center; flex-shrink: 0; width: clamp(140px, 13vw, 185px); aspect-ratio: 1; border-radius: 50%; }
+.carbon-ring > div { position: absolute; inset: 16%; display: flex; align-items: center; justify-content: center; flex-direction: column; border-radius: 50%; background: var(--color-app-surface); }
+.carbon-ring strong { color: var(--color-app-heading); font-size: 33px; letter-spacing: -1px; font-weight: 750; }
+.carbon-ring span { font-size: 12px; color: var(--color-app-ink-soft); }
+.carbon-details { flex: 1; min-width: 0; }
+.carbon-comparison { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 9px; color: var(--color-app-ink-soft); margin-bottom: 18px; }
+.carbon-comparison > span { display: inline-flex; align-items: center; gap: 2px; border-radius: 7px; padding: 5px; background: #e1efce; color: #297d25; font-size: 16px; font-weight: 650; }
+.carbon-increase > span { background: #f7ebce; color: #976c27; }
+.carbon-scope { font-size: 11px; color: var(--color-app-ink-soft); margin-bottom: 14px; line-height: 1.65; }
+.carbon-breakdown { display: flex; flex-direction: column; gap: 14px; }
+.carbon-breakdown li { display: flex; align-items: center; gap: 8px; font-size: 10px; }
+.carbon-breakdown li > span { flex: 1; color: var(--color-app-ink-soft); }
+.carbon-breakdown strong { font-size: 11px; font-weight: 650; color: var(--color-app-heading); }
+.carbon-methodology { display: inline-flex; align-items: center; gap: 4px; position: relative; z-index: 1; font-size: 9px; color: var(--color-app-ink-soft); }
+.carbon-methodology:hover { color: var(--color-app-link); }
+.carbon-leaves { position: absolute; width: 115px; right: -18px; bottom: -44px; opacity: .45; pointer-events: none; }
+.nature-bottom-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, .96fr); gap: 16px; }
+.nature-bottom-grid .nature-card { padding: 19px; }
+.nature-bottom-grid .nature-card-heading { gap: 9px; }
+.nature-bottom-grid .nature-card-heading h2 { font-size: 16px; }
+.nature-bottom-grid .nature-card-heading p { font-size: 10px; }
+.nature-bottom-grid .nature-card-heading > a { font-size: 10px; }
+.dashboard-farm-list { margin-top: 15px; }
+.dashboard-farm-list li + li { border-top: 1px solid var(--color-app-border); }
+.dashboard-farm-list li > a { display: flex; align-items: center; gap: 11px; padding: 12px 0; min-width: 0; }
+.farm-scenic-thumb { width: 48px; height: 52px; object-fit: cover; object-position: 15% center; border-radius: 10px; flex-shrink: 0; }
+.farm-scenic-thumb-1 { object-position: 60% center; }
+.farm-scenic-thumb-2 { object-position: 85% center; }
+.dashboard-farm-info { flex: 1; min-width: 0; }
+.dashboard-farm-info h3 { font-size: 12px; font-weight: 650; color: var(--color-app-heading); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dashboard-farm-info p { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--color-app-ink-soft); margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dashboard-farm-info p svg { color: #ae943b; flex-shrink: 0; }
+.dashboard-farm-list strong { font-size: 12px; font-weight: 600; white-space: nowrap; }
+.dashboard-farm-list strong small { font-size: 10px; font-weight: 400; color: var(--color-app-ink-soft); }
+.dashboard-farm-list .farm-crops { max-width: 135px; gap: 5px; }
+.dashboard-farm-list .farm-crops span { padding: 4px 7px; font-size: 9px; border-radius: 15px; background: #edf3e4; color: #3e5734; border: 0; white-space: nowrap; }
+.dashboard-farm-list .farm-crops span:nth-child(2) { background: #faf0d8; color: #826623; }
+.farm-list-arrow { flex-shrink: 0; color: var(--color-app-ink-soft); }
+.nature-activity-list { margin-top: 16px; }
+.nature-activity-list li > a { display: flex; align-items: center; gap: 10px; padding: 9px 0; }
+.activity-resource-icon { display: grid; place-items: center; height: 35px; width: 35px; border-radius: 12px; flex-shrink: 0; background: #edf2df; color: #659543; }
+.activity-resource-water { background: #ebf1f3; color: #178bd6; }
+.activity-resource-energy { background: #fbf2dd; color: #cc9b24; }
+.nature-activity-list li > a > div { min-width: 0; flex: 1; }
+.nature-activity-list h3 { font-size: 11px; font-weight: 650; color: var(--color-app-heading); }
+.nature-activity-list p { font-size: 10px; color: var(--color-app-ink-soft); margin-top: 4px; line-height: 1.4; }
+.nature-activity-list li > a > svg { color: var(--color-app-ink-soft); flex-shrink: 0; }
+.quick-actions-card { background: color-mix(in srgb, #ebf1d4 75%, var(--color-app-surface)); border-color: #e0e9c8; }
+.quick-actions-card .nature-heading-icon { color: #4d7d34; }
+.nature-quick-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+.nature-quick-actions > a { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--color-app-border); border-radius: 11px; background: var(--color-app-surface); color: var(--color-app-heading); font-size: 11px; font-weight: 650; min-width: 0; }
+.nature-quick-actions > a:hover { border-color: #a1b987; }
+.nature-quick-actions > a > svg:first-child { color: #285c33; flex-shrink: 0; }
+.nature-quick-actions > a > span { flex: 1; }
+.nature-quick-actions > a > svg:last-child { color: var(--color-app-ink-soft); flex-shrink: 0; }
+.nature-quick-actions > .quick-primary { background: #1b472f; border-color: #173c28; color: #f5f8ed; }
+.nature-quick-actions > .quick-primary > svg { color: #cee0b6 !important; }
+.nature-empty { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 11px; min-height: 180px; padding: 20px 10px; text-align: center; color: var(--color-app-ink-soft); font-size: 12px; line-height: 1.7; }
+.nature-empty > svg { color: #8cae67; }
+.nature-empty h3 { font-size: 16px; font-weight: 650; color: var(--color-app-heading); }
+.nature-empty a { display: inline-flex; gap: 5px; align-items: center; color: var(--color-app-link); font-size: 11px; font-weight: 650; }
+.nature-bottom-grid .nature-empty { min-height: 195px; }
+.metric-card { border-radius: 15px; border-top-width: 1px; padding: 20px; }
+.farm-register, .farm-identity, .workspace-note, .app-page form { border-radius: 15px; }
+.workspace-shell .app-page .rounded-2xl, .workspace-shell .app-page .rounded-xl { border-radius: 15px; }
+:root[data-theme='dark'] .nature-stat-sage, :root[data-theme='dark'] .quick-actions-card { background: #263b26; border-color: var(--color-app-border); }
+:root[data-theme='dark'] .nature-heading-icon { color: #b6d695; }
+:root[data-theme='dark'] .welcome-landscape { opacity: .6; }
+:root[data-theme='dark'] .nature-stat-icon { background: #314a2b; color: #bfda90; }
+@media (min-width: 1600px) {
+  .desktop-sidebar { width: 255px; }
+  .nature-stat { padding: 23px; }
+  .nature-stat-label { font-size: 14px; }
+  .nature-stat p { font-size: 12px; }
+  .nature-card { padding: 24px; }
+  .reference-dashboard .nature-card h2 { font-size: 20px; }
+  .nature-card-heading p { font-size: 13px; }
+  .nature-bottom-grid .nature-card { padding: 23px; }
+  .nature-bottom-grid .nature-card-heading h2 { font-size: 18px; }
+  .dashboard-farm-info h3 { font-size: 14px; }
+  .nature-activity-list h3 { font-size: 13px; }
+  .nature-quick-actions > a { font-size: 13px; }
+}
+@media (max-width: 1250px) {
+  .desktop-sidebar { width: 218px; }
+  .desktop-sidebar nav a { font-size: 12px; padding-inline: 12px; gap: 12px; }
+  .sidebar-brand { padding-inline: 5px; }
+  .sidebar-brand .agripulse-logo > span { font-size: 24px; }
+  .nature-stat { gap: 10px; padding: 17px 12px; }
+  .nature-stat-icon { width: 40px; height: 45px; border-radius: 15px; }
+  .nature-stat-icon svg { width: 24px; }
+  .nature-stat-arrow { display: none; }
+  .nature-stat-label { font-size: 11px; }
+  .nature-stat strong { font-size: 26px; }
+  .nature-middle-grid { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+  .carbon-visual { gap: 12px; }
+  .carbon-ring { width: 130px; }
+  .nature-bottom-grid { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); }
+  .quick-actions-card { grid-column: 1 / -1; }
+  .nature-quick-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .nature-quick-actions > a { gap: 7px; font-size: 10px; padding: 10px; }
+  .nature-quick-actions > a > svg:last-child { display: none; }
+  .dashboard-farm-list .farm-crops { display: none; }
+}
+@media (max-height: 780px) and (min-width: 901px) {
+  .sidebar-tools { padding-top: 14px; margin-top: 16px; gap: 0; }
+  .sidebar-tools > a, .sidebar-tools > button { padding-block: 10px; }
+  .sidebar-landscape { min-height: 120px; }
+  .sidebar-landscape > div { bottom: 17px; }
+  .nature-welcome { min-height: 90px; }
+  .nature-stat { padding-block: 15px; }
+  .nature-card { padding: 17px; }
+  .nature-bottom-grid .nature-card { padding: 17px; }
+  .resource-chart > svg { max-height: 175px; }
+}
+@media (max-width: 1000px) {
+  .nature-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .nature-middle-grid { grid-template-columns: 1fr; }
+  .carbon-visual { gap: 36px; }
+  .carbon-ring { width: 170px; }
+  .carbon-details { max-width: 350px; }
+  .welcome-landscape { width: 45%; }
+  .welcome-landscape blockquote { display: none; }
+}
+@media (max-width: 900px) {
+  .desktop-sidebar { display: none; }
+  .workspace-topbar { background: var(--color-app-bg); padding: 12px 20px; min-height: 66px; gap: 16px; }
+  .mobile-page-title { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 650; }
+  .mobile-page-title > span { display: none; }
+  .workspace-search { flex: 1; width: auto; padding: 9px 12px; }
+  .topbar-account { gap: 12px; }
+  .workspace-main { padding: 10px 20px 28px; }
+  .account-name { display: none; }
+  .mobile-sidebar { width: 280px; padding-top: 34px; }
+  .mobile-sidebar .sidebar-landscape { min-height: 150px; }
+  .workspace-content[inert] { pointer-events: none; }
+}
+@media (max-width: 600px) {
+  .workspace-topbar { padding: 10px 14px; gap: 8px; }
+  .workspace-search { padding: 9px; border-radius: 12px; gap: 6px; }
+  .workspace-search input { font-size: 11px; }
+  .topbar-account { gap: 6px; }
+  .topbar-activity { display: none; }
+  .account-avatar { width: 32px; height: 32px; font-size: 16px; }
+  .account-menu summary { gap: 3px; }
+  .workspace-main { padding: 8px 14px 25px; }
+  .nature-welcome { padding: 5px 2px 12px; min-height: 110px; }
+  .nature-welcome h1 { font-size: 30px; }
+  .nature-welcome > div:first-child > p { font-size: 14px; }
+  .nature-welcome > div:first-child > span { font-size: 12px; }
+  .welcome-landscape { display: none; }
+  .nature-stats { gap: 10px; }
+  .nature-stat { padding: 14px 12px; gap: 10px; flex-direction: column; border-radius: 14px; }
+  .nature-stat-icon { width: 38px; height: 38px; border-radius: 12px; }
+  .nature-stat > div { padding: 0; }
+  .nature-stat-label { font-size: 11px; }
+  .nature-stat strong { font-size: 26px; }
+  .nature-stat strong small { font-size: 12px; }
+  .nature-stat p { font-size: 9px; }
+  .nature-card { border-radius: 15px; padding: 16px; }
+  .nature-card-heading { gap: 9px; flex-wrap: wrap; }
+  .reference-dashboard .nature-card h2 { font-size: 16px; }
+  .nature-card-heading p { font-size: 10px; }
+  .nature-heading-icon { width: 21px; }
+  .trend-period { margin: 6px 0 0 30px; }
+  .trend-period select { padding-block: 6px; }
+  .resource-chart > svg { min-height: 150px; }
+  .resource-chart-legend { gap: 12px; }
+  .carbon-visual { gap: 20px; margin-top: 22px; }
+  .carbon-ring { width: 130px; }
+  .carbon-ring strong { font-size: 28px; }
+  .carbon-breakdown { gap: 12px; }
+  .carbon-breakdown li { font-size: 9px; }
+  .nature-bottom-grid { grid-template-columns: 1fr; }
+  .quick-actions-card { grid-column: auto; }
+  .nature-quick-actions { display: flex; }
+  .nature-quick-actions > a { padding: 13px; font-size: 12px; }
+  .nature-quick-actions > a > svg:last-child { display: block; }
+  .dashboard-farm-list .farm-crops { display: flex; max-width: 100px; }
+  .farm-scenic-thumb { width: 44px; height: 48px; }
+  .dashboard-farm-list li > a { gap: 9px; }
+}

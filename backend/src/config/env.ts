@@ -4,12 +4,15 @@ import { z } from 'zod';
 /** Validates process.env once at startup so a missing/malformed value fails fast, not mid-request. */
 const envSchema = z.object({
   MONGODB_URI: z.string().min(1, 'MONGODB_URI is required'),
-  JWT_SECRET: z.string().min(16, 'JWT_SECRET must be at least 16 characters'),
-  JWT_EXPIRES_IN: z.string().default('1d'),
-  FRONTEND_URL: z.string().default('http://localhost:5173'),
+  JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters; use a strong random value'),
+  JWT_EXPIRES_IN: z.string().trim().min(1, 'JWT_EXPIRES_IN is required'),
+  FRONTEND_URL: z.string().url('FRONTEND_URL must be a valid URL'),
   /** Optional: enables POST /auth/google. Must match the frontend's VITE_GOOGLE_CLIENT_ID. */
-  GOOGLE_CLIENT_ID: z.string().trim().min(1).optional(),
-  PORT: z.coerce.number().int().positive().default(3000),
+  GOOGLE_CLIENT_ID: z.preprocess(
+    (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+    z.string().trim().min(1).optional(),
+  ),
+  PORT: z.coerce.number().int().positive(),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 });
 
@@ -20,7 +23,8 @@ if (!parsed.success) {
   for (const issue of parsed.error.issues) {
     console.error(`  - ${issue.path.join('.')}: ${issue.message}`);
   }
-  console.error('\nCopy backend/.env.example to backend/.env and fill in the values.');
+  console.error('\nFor local development, set these values in backend/.env.');
+  console.error('For Docker Compose, set JWT_SECRET in the project-root .env; Compose supplies the container MongoDB URI.');
   process.exit(1);
 }
 

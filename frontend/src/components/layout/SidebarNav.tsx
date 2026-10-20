@@ -1,4 +1,4 @@
-import { BarChart3, Droplets, LayoutDashboard, Sprout, UserRound } from 'lucide-react'
+import { BarChart3, Droplets, LayoutDashboard, Warehouse, Sprout, UserRound } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { cn } from '@/utils/cn'
 
@@ -9,7 +9,8 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/farms', label: 'Farm Management', icon: Warehouse },
   { to: '/resources', label: 'Resource Tracking', icon: Droplets },
   { to: '/carbon', label: 'Carbon Calculator', icon: Sprout },
   { to: '/analytics', label: 'Analytics', icon: BarChart3 },

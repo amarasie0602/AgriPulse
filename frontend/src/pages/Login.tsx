@@ -1,5 +1,5 @@
 import { LoginForm } from '@/components/auth'
-import { ConsoleAuthShell, SmartFieldConsoleFrame } from '@/components/layout'
+import { ConsoleAuthShell } from '@/components/layout'
 import { useDocumentTitle } from '@/hooks'
 
 export default function Login() {
@@ -8,9 +8,9 @@ export default function Login() {
   return (
     <ConsoleAuthShell>
       <div className="w-full animate-slide-up">
-        <SmartFieldConsoleFrame>
+
           <LoginForm />
-        </SmartFieldConsoleFrame>
+
       </div>
     </ConsoleAuthShell>
   )
