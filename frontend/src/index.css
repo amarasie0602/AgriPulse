@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @import './workspace.css';
 @import './reference.css';
+@import './crops.css';
 
 /*
  * AgriPulse design tokens.

@@ -20,6 +20,12 @@ function toDto(entry: ResourceEntryDoc): ResourceEntryDto {
 }
 
 export const resourcesService = {
+  async update(userId: string, entryId: string, input: CreateResourceEntryInput): Promise<ResourceEntryDto> {
+    const entry = Types.ObjectId.isValid(entryId) ? await ResourceEntryModel.findOne({ _id: entryId, userId }) : null;
+    if (!entry) throw new NotFoundError('This entry no longer exists.');
+    entry.set({ ...input, notes: input.notes ?? '', date: new Date(input.date) });
+    return toDto(await entry.save());
+  },
   async create(userId: string, input: CreateResourceEntryInput): Promise<ResourceEntryDto> {
     const entry = await ResourceEntryModel.create({
       userId,

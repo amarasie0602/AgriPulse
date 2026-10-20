@@ -72,6 +72,17 @@ export const mockResourceService: ResourceService = {
     return rest
   },
 
+  async update(id, input) {
+    await wait();
+    const userId = currentUserId();
+    const entries = readEntries();
+    const entry = entries.find(entry => entry.id === id && entry.userId === userId);
+    if (!entry) throw new AuthError('This entry no longer exists.', 404);
+    Object.assign(entry, input, { date: new Date(input.date).toISOString() });
+    writeEntries(entries);
+    const { userId: _owner, ...rest } = entry;
+    return rest;
+  },
   async remove(id: string): Promise<void> {
     await wait()
     const userId = currentUserId()

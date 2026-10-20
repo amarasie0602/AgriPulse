@@ -10,3 +10,4 @@ dist
 
 # Local browser verification artifacts
 .qa/
+video/out/

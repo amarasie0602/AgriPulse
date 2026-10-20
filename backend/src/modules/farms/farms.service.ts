@@ -2,6 +2,7 @@
 import { HttpError, NotFoundError } from '../../common/errors/http-error';
 import { FarmModel, type FarmDoc } from './farm.model';
 import type { CreateFarmInput, UpdateFarmInput } from './farms.validation';
+import { CropModel } from '../crops/crop.model';
 
 function validateId(id: string): void {
   if (!/^[a-f\d]{24}$/i.test(id) || !Types.ObjectId.isValid(id)) {
@@ -42,6 +43,9 @@ export const farmsService = {
   },
   async remove(userId: string, id: string) {
     validateId(id);
+    if (await CropModel.exists({ farmId: id, userId })) {
+      throw new HttpError(409, 'Move or delete this farm’s crop records before deleting the farm.');
+    }
     const farm = await FarmModel.findOneAndDelete({ _id: id, userId });
     if (!farm) throw new NotFoundError('This farm was not found.');
   },

@@ -6,6 +6,10 @@ import { mockResourceService } from './mockResourceService'
 
 /** Real HTTP calls for the resource tracking log. */
 const httpResourceService: ResourceService = {
+  async update(id, input) {
+    try { return (await api.put<ResourceEntry>(`/resources/${id}`, input)).data }
+    catch (error) { throw toAuthError(error, 'profile') }
+  },
   async list() {
     try {
       const { data } = await api.get<ResourceEntry[]>('/resources')

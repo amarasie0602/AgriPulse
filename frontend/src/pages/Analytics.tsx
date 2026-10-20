@@ -1,4 +1,9 @@
 import { PageHeader, PageAction, MetricCard } from '@/components/ui/Workspace'
+import { LandUse } from '@/components/ui/LandUse'
+import { useState } from 'react'
+import { TextField } from '@/components/ui/TextField'
+import { Select } from '@/components/ui/Select'
+import { RESOURCE_TYPES, RESOURCE_TYPE_LABELS } from '@/types'
 import { BarChart3, Bug, Droplets, Fuel, Info, Package, Sprout, Zap, type LucideIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Alert } from '@/components/ui/Alert'
@@ -21,25 +26,32 @@ export default function Analytics() {
   useDocumentTitle('Analytics')
   const { theme } = useTheme()
   const { entries, loading, error } = useResourceEntries()
+  const [from, setFrom] = useState('')
+  const [to, setTo] = useState('')
+  const [category, setCategory] = useState('')
+  const selectedEntries = entries.filter(entry => (!from || entry.date.slice(0, 10) >= from) && (!to || entry.date.slice(0, 10) <= to) && (!category || entry.resourceType === category))
 
-  const carbonTrend = monthlyCarbonTrend(entries)
-  const resourceTrends = monthlyResourceTrends(entries)
+  const carbonTrend = monthlyCarbonTrend(selectedEntries)
+  const resourceTrends = monthlyResourceTrends(selectedEntries)
   const totalCo2eKg = carbonTrend.reduce((sum, point) => sum + point.value, 0)
 
   return (
     <div className="app-page analytics-page animate-slide-up space-y-8">
       <PageHeader eyebrow="MEASURE & UNDERSTAND" title={`Farm analytics`} description="Turn everyday resource records into a clearer picture of your farm." action={<PageAction to="/resources">Log resource usage</PageAction>} />
 
-      <div className="metrics-grid"><MetricCard icon={Sprout} label="Estimated emissions" value={loading ? '...' : formatCo2e(totalCo2eKg)} detail="Across the displayed months" accent /><MetricCard icon={BarChart3} label="Tracked resources" value={loading ? '...' : resourceTrends.length} detail="Resource categories with trend data" /><MetricCard icon={Droplets} label="Resource records" value={loading ? '...' : entries.length} detail="Your data behind the insights" /></div>
+      <div className="metrics-grid"><MetricCard icon={Sprout} label="Estimated emissions" value={loading ? '...' : error ? 'Unavailable' : formatCo2e(totalCo2eKg)} detail="Across the displayed months" accent /><MetricCard icon={BarChart3} label="Tracked resources" value={loading ? '...' : error ? 'Unavailable' : resourceTrends.length} detail="Resource categories with trend data" /><MetricCard icon={Droplets} label="Resource records" value={loading ? '...' : error ? 'Unavailable' : selectedEntries.length} detail="Your data behind the insights" /></div>
       {error && (
         <Alert tone="error" surface={theme}>
           {error}
         </Alert>
       )}
 
+      <LandUse />
+      <section aria-label="Resource analytics filters" className="resource-filters"><TextField label="From date" tone={theme} type="date" value={from} max={to || undefined} onChange={event => setFrom(event.target.value)} /><TextField label="To date" tone={theme} type="date" value={to} min={from || undefined} onChange={event => setTo(event.target.value)} /><Select label="Resource category" tone={theme} value={category} onChange={event => setCategory(event.target.value)}><option value="">All resources</option>{RESOURCE_TYPES.map(type => <option key={type} value={type}>{RESOURCE_TYPE_LABELS[type]}</option>)}</Select></section>
+
       {loading ? (
         <p className="text-app-ink-soft">Loading…</p>
-      ) : entries.length === 0 ? (
+      ) : selectedEntries.length === 0 ? (
         <div className="flex flex-col items-start gap-3 rounded-2xl border border-dashed border-app-border p-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <BarChart3 className="size-5 shrink-0 text-app-link" aria-hidden="true" />

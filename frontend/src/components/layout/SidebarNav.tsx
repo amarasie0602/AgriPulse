@@ -11,6 +11,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/farms', label: 'Farm Management', icon: Warehouse },
+  { to: '/crops', label: 'Crop Management', icon: Sprout },
   { to: '/resources', label: 'Resource Tracking', icon: Droplets },
   { to: '/carbon', label: 'Carbon Calculator', icon: Sprout },
   { to: '/analytics', label: 'Analytics', icon: BarChart3 },

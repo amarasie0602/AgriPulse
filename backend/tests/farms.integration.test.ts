@@ -16,6 +16,7 @@ integration('Farm API with MongoDB and real authentication', () => {
   const createdUserIds: string[] = [];
   const createdFarmIds: string[] = [];
   const createdResourceIds: string[] = [];
+  const createdCropIds: string[] = [];
   const password = 'FarmTest!pass1234';
   const suffix = randomUUID();
   const ownerEmail = `owner-${suffix}@example.com`;
@@ -50,7 +51,7 @@ integration('Farm API with MongoDB and real authentication', () => {
 
   afterAll(async () => {
     if (mongoose.connection.readyState === 1) {
-      for (const [collection, ids] of [['farms', createdFarmIds], ['resourceentries', createdResourceIds], ['users', createdUserIds]] as const) {
+      for (const [collection, ids] of [['crops', createdCropIds], ['farms', createdFarmIds], ['resourceentries', createdResourceIds], ['users', createdUserIds]] as const) {
         if (ids.length) await mongoose.connection.collection(collection).deleteMany({ _id: { $in: ids.map(id => new mongoose.Types.ObjectId(id)) } });
       }
     }
@@ -116,10 +117,42 @@ integration('Farm API with MongoDB and real authentication', () => {
     const profile = await request(app).get('/users/me').auth(ownerToken, { type: 'bearer' });
     expect(profile.body.farmName).toBe('Default Farm');
   });
+  it('persists crops, validates farm access, and prevents cross-account CRUD', async () => {
+    const input = { name: 'Samba rice', category: 'Rice & paddy', farmId, areaHectares: 2, plantingDate: '2026-10-20', harvestDate: '2027-02-10', stage: 'Planted' };
+    expect((await request(app).get('/crops')).status).toBe(401);
+    expect((await request(app).post('/crops').auth(otherToken, { type: 'bearer' }).send(input)).status).toBe(404);
+    expect((await request(app).post('/crops').auth(ownerToken, { type: 'bearer' }).send({ ...input, areaHectares: 100 })).status).toBe(400);
+    expect((await request(app).post('/crops').auth(ownerToken, { type: 'bearer' }).send({ ...input, harvestDate: '2020-01-01' })).status).toBe(400);
+    const response = await request(app).post('/crops').auth(ownerToken, { type: 'bearer' }).send(input);
+    expect(response.status).toBe(201);
+    const cropId = response.body.id;
+    createdCropIds.push(cropId);
+    expect(response.body).toMatchObject(input);
+    expect(response.body).not.toHaveProperty('userId');
+    const stored = await mongoose.connection.collection('crops').findOne({ _id: new mongoose.Types.ObjectId(cropId) });
+    expect(String(stored!.userId)).toBe(ownerId);
+    expect((await request(app).get('/crops').auth(otherToken, { type: 'bearer' })).body).toEqual([]);
+    for (const response of await Promise.all([
+      request(app).get('/crops/' + cropId).auth(otherToken, { type: 'bearer' }),
+      request(app).put('/crops/' + cropId).auth(otherToken, { type: 'bearer' }).send(input),
+      request(app).delete('/crops/' + cropId).auth(otherToken, { type: 'bearer' }),
+    ])) expect(response.status).toBe(404);
+    expect((await request(app).delete('/farms/' + farmId).auth(ownerToken, { type: 'bearer' })).status).toBe(409);
+    const updated = await request(app).put('/crops/' + cropId).auth(ownerToken, { type: 'bearer' }).send({ ...input, stage: 'Growing', notes: 'Field inspection' });
+    expect(updated.status).toBe(200);
+    expect((await request(app).get('/crops/' + cropId).auth(ownerToken, { type: 'bearer' })).body.notes).toBe('Field inspection');
+    expect((await request(app).delete('/crops/' + cropId).auth(ownerToken, { type: 'bearer' })).status).toBe(204);
+    expect((await request(app).get('/crops/' + cropId).auth(ownerToken, { type: 'bearer' })).status).toBe(404);
+  });
   it('preserves resource tracking and ownership while deleting a farm', async () => {
     const resource = await request(app).post('/resources').auth(ownerToken, { type: 'bearer' }).send({ resourceType: 'FUEL', quantity: 10, unit: 'L', date: '2026-10-01' });
     expect(resource.status).toBe(201);
     createdResourceIds.push(resource.body.id);
+    const resourceInput = { resourceType: 'FUEL', quantity: 12, unit: 'L', date: '2026-10-02', notes: 'Corrected log' };
+    expect((await request(app).put(`/resources/${resource.body.id}`).auth(otherToken, { type: 'bearer' }).send(resourceInput)).status).toBe(404);
+    expect((await request(app).put(`/resources/${resource.body.id}`).auth(ownerToken, { type: 'bearer' }).send({ ...resourceInput, quantity: -1 })).status).toBe(400);
+    expect((await request(app).put(`/resources/${resource.body.id}`).auth(ownerToken, { type: 'bearer' }).send(resourceInput)).body.quantity).toBe(12);
+    expect((await request(app).put(`/resources/${resource.body.id}`).auth(ownerToken, { type: 'bearer' }).send({ ...resourceInput, quantity: 10 })).status).toBe(200);
     expect((await request(app).get('/resources/summary').auth(ownerToken, { type: 'bearer' })).body.FUEL).toBe(10);
     expect((await request(app).delete(`/farms/${farmId}`).auth(ownerToken, { type: 'bearer' })).status).toBe(204);
     expect((await request(app).get(`/farms/${farmId}`).auth(ownerToken, { type: 'bearer' })).status).toBe(404);

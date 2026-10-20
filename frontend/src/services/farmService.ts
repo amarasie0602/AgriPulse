@@ -29,6 +29,7 @@ async function request<T>(operation: () => Promise<{ data: T }>): Promise<T> {
       if (status === 404) throw new FarmRequestError('This farm is no longer available. Refresh the farm list.')
       if (status === 401) throw new FarmRequestError('Your session has expired. Please sign in again.')
       if (status === 403) throw new FarmRequestError('You do not have access to this farm.')
+      if (status === 409) throw new FarmRequestError('Move or delete this farm’s crop records before deleting the farm.')
       if (!error.response) throw new FarmRequestError('Unable to connect. Check your connection and try again.')
     }
     throw new FarmRequestError('Could not complete the farm request. Please try again.')

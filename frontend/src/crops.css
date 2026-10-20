@@ -1,0 +1,45 @@
+.season-ledger { display:grid; grid-template-columns:1fr 1.2fr 1.8fr; border-block:1px solid var(--color-app-border); margin:8px 0 28px; padding:24px 0; gap:28px; }
+.season-ledger > div + div { border-left:1px solid var(--color-app-border); padding-left:28px; }
+.season-ledger span,.crop-dates span { font-size:10px; letter-spacing:.12em; color:var(--color-app-ink-soft); }
+.season-ledger strong { display:block; font-family:var(--font-display); font-size:36px; line-height:1.3; margin-top:8px; }
+.season-ledger small { font:16px var(--font-sans); }
+.season-ledger p { font-size:12px; color:var(--color-app-ink-soft); margin-top:6px; }
+.next-harvest { position:relative; }
+.next-harvest > svg { position:absolute; right:4px; top:4px; color:var(--color-app-accent); }
+.next-harvest strong { font-size:26px; }
+.crop-toolbar { grid-template-columns:2fr 1fr 1fr 1fr; }
+.crop-ledger { border-top:1px solid var(--color-app-border); }
+.crop-row { display:grid; grid-template-columns:1.4fr 1fr 1.2fr .6fr auto; gap:24px; padding:26px 4px; align-items:center; border-bottom:1px solid var(--color-app-border); }
+.crop-identity .farm-name { display:block; font:600 23px var(--font-display); padding:6px 0; text-align:left; }
+.crop-identity p,.crop-stage small { color:var(--color-app-ink-soft); font-size:11px; }
+.crop-stage > span { font-size:12px; font-weight:650; }
+.growth-track { display:flex; gap:4px; margin:10px 0 6px; }
+.growth-track i { height:4px; flex:1; background:var(--color-app-border); }
+.growth-track .reached { background:var(--color-app-accent); }
+.crop-dates { display:grid; gap:12px; }
+.crop-dates strong { display:block; font-size:12px; font-weight:550; letter-spacing:0; color:var(--color-app-ink); margin-top:3px; }
+.crop-area { font-size:20px; font-variant-numeric:tabular-nums; }
+.crop-area small { display:block; font-size:10px; color:var(--color-app-ink-soft); }
+.crop-fieldset { border:0; padding:0; margin:0; min-width:0; }
+.crop-notes { display:grid; gap:8px; font-size:12px; color:var(--color-app-ink); }
+.crop-notes textarea { width:100%; border:1px solid var(--color-app-border); background:var(--color-app-surface); color:var(--color-app-ink); border-radius:6px; padding:10px; resize:vertical; }
+.crop-detail-value { white-space:pre-wrap; overflow-wrap:anywhere; }
+.farm-symbol { display:grid; place-items:center; height:48px; width:48px; flex-shrink:0; background:var(--color-app-bg); color:var(--color-app-accent); border:1px solid var(--color-app-border); }
+.harvest-strip { display:flex; flex-wrap:wrap; align-items:center; gap:20px 32px; border-block:1px solid var(--color-app-border); padding:20px 0; margin:0 0 24px; }
+.harvest-strip h2 { font:500 22px var(--font-display); margin-top:4px; }
+.harvest-strip > a { display:flex; flex-direction:column; gap:5px; font-size:13px; color:var(--color-app-ink); border-left:1px solid var(--color-app-border); padding-left:24px; }
+.harvest-strip > a span { font-size:11px; color:var(--color-app-ink-soft); }
+.resource-filters { display:grid; grid-template-columns:1.5fr 1fr 1fr 1fr 1fr; gap:12px; margin-bottom:18px; }
+.land-use { display:grid; grid-template-columns:1fr 1fr; gap:36px; border-block:1px solid var(--color-app-border); padding:26px 0; }
+.land-use h2 { font:500 24px var(--font-display); }
+.land-use p { font-size:12px; color:var(--color-app-ink-soft); margin:8px 0 20px; }
+.land-use li { margin-top:18px; }.land-use li > div { display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px; font-size:12px; }.land-use small { font-weight:400; color:var(--color-app-ink-soft); }
+.land-use meter { width:100%; height:12px; margin-top:7px; accent-color:var(--color-app-accent); }
+.brand-film { display:grid; grid-template-columns:1fr 1.2fr; gap:32px; align-items:center; border-top:1px solid var(--color-app-border); padding-top:28px; margin-top:28px; }
+.brand-film h2 { font:500 30px var(--font-display); margin:12px 0; }.brand-film p:not(.eyebrow) { font-size:12px; color:var(--color-app-ink-soft); line-height:1.7; max-width:360px; }.brand-film img,.brand-film video { width:100%; aspect-ratio:16/9; object-fit:cover; background:#102a1e; }.film-toggle { display:flex; gap:8px; align-items:center; margin-top:18px; color:var(--color-app-accent); font-size:13px; cursor:pointer; }
+@media(max-width:640px) { .brand-film { grid-template-columns:1fr; } }
+@media(max-width:640px) { .land-use { grid-template-columns:1fr; gap:24px; } }
+@media(max-width:900px) { .resource-filters { grid-template-columns:1fr 1fr; } }
+@media(max-width:480px) { .resource-filters { grid-template-columns:1fr; } }
+@media(max-width:1100px) { .crop-row { grid-template-columns:1.4fr 1fr 1fr; gap:18px; }.crop-area { grid-column:2; }.crop-toolbar { grid-template-columns:1fr 1fr; } }
+@media(max-width:640px) { .season-ledger { grid-template-columns:1fr 1fr; gap:18px; }.season-ledger > div + div { padding-left:16px; }.season-ledger .next-harvest { grid-column:1/-1; padding:16px 0 0; border-left:0; border-top:1px solid var(--color-app-border); }.crop-row { grid-template-columns:1fr 1fr; }.crop-identity { grid-column:1/-1; }.crop-area { grid-column:1; }.crop-toolbar { grid-template-columns:1fr; } }

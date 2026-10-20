@@ -14,6 +14,7 @@ const labels: Record<string, string> = {
   '/analytics': 'Analytics',
   '/profile': 'Farm profile',
   '/farms': 'Farm management',
+  '/crops': 'Crop management',
 }
 
 export function DashboardShell() {
