@@ -1,128 +1,44 @@
+﻿import { FarmFilter } from '@/components/ui/FarmFilter'
+import { useFarmDirectory } from '@/hooks/useFarmDirectory'
+import { scopeResourceEntries } from '@/utils/reportScope'
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { BarChart3, Droplets, Sprout } from 'lucide-react'
 import { PageHeader, PageAction, MetricCard } from '@/components/ui/Workspace'
 import { LandUse } from '@/components/ui/LandUse'
-import { useState } from 'react'
 import { TextField } from '@/components/ui/TextField'
 import { Select } from '@/components/ui/Select'
-import { RESOURCE_TYPES, RESOURCE_TYPE_LABELS } from '@/types'
-import { BarChart3, Bug, Droplets, Fuel, Info, Package, Sprout, Zap, type LucideIcon } from 'lucide-react'
-import { Link } from 'react-router-dom'
 import { Alert } from '@/components/ui/Alert'
-import { Sparkline, TrendChart } from '@/components/ui/TrendChart'
+import { TrendChart } from '@/components/ui/TrendChart'
+import { ResourceHistorySection } from '@/components/ui/ResourceHistorySection'
+import { RESOURCE_TYPES, RESOURCE_TYPE_LABELS } from '@/types'
 import { useDocumentTitle, useResourceEntries, useTheme } from '@/hooks'
-import type { ResourceType } from '@/types'
-import { monthlyCarbonTrend, monthlyResourceTrends } from '@/utils/analytics'
+import { monthlyCarbonTrend } from '@/utils/analytics'
 import { formatCo2e } from '@/utils/carbon'
-
-const RESOURCE_TYPE_ICONS: Record<ResourceType, LucideIcon> = {
-  WATER: Droplets,
-  ENERGY: Zap,
-  FERTILIZER: Sprout,
-  PESTICIDE: Bug,
-  FUEL: Fuel,
-  OTHER: Package,
-}
 
 export default function Analytics() {
   useDocumentTitle('Analytics')
   const { theme } = useTheme()
   const { entries, loading, error } = useResourceEntries()
+  const directory = useFarmDirectory()
+  const [farm, setFarm] = useState('')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [category, setCategory] = useState('')
-  const selectedEntries = entries.filter(entry => (!from || entry.date.slice(0, 10) >= from) && (!to || entry.date.slice(0, 10) <= to) && (!category || entry.resourceType === category))
-
+  const selectedEntries = scopeResourceEntries(entries, farm, from, to).filter(entry => !category || entry.resourceType === category)
   const carbonTrend = monthlyCarbonTrend(selectedEntries)
-  const resourceTrends = monthlyResourceTrends(selectedEntries)
-  const totalCo2eKg = carbonTrend.reduce((sum, point) => sum + point.value, 0)
-
-  return (
-    <div className="app-page analytics-page animate-slide-up space-y-8">
-      <PageHeader eyebrow="MEASURE & UNDERSTAND" title={`Farm analytics`} description="Turn everyday resource records into a clearer picture of your farm." action={<PageAction to="/resources">Log resource usage</PageAction>} />
-
-      <div className="metrics-grid"><MetricCard icon={Sprout} label="Estimated emissions" value={loading ? '...' : error ? 'Unavailable' : formatCo2e(totalCo2eKg)} detail="Across the displayed months" accent /><MetricCard icon={BarChart3} label="Tracked resources" value={loading ? '...' : error ? 'Unavailable' : resourceTrends.length} detail="Resource categories with trend data" /><MetricCard icon={Droplets} label="Resource records" value={loading ? '...' : error ? 'Unavailable' : selectedEntries.length} detail="Your data behind the insights" /></div>
-      {error && (
-        <Alert tone="error" surface={theme}>
-          {error}
-        </Alert>
-      )}
-
-      <LandUse />
-      <section aria-label="Resource analytics filters" className="resource-filters"><TextField label="From date" tone={theme} type="date" value={from} max={to || undefined} onChange={event => setFrom(event.target.value)} /><TextField label="To date" tone={theme} type="date" value={to} min={from || undefined} onChange={event => setTo(event.target.value)} /><Select label="Resource category" tone={theme} value={category} onChange={event => setCategory(event.target.value)}><option value="">All resources</option>{RESOURCE_TYPES.map(type => <option key={type} value={type}>{RESOURCE_TYPE_LABELS[type]}</option>)}</Select></section>
-
-      {loading ? (
-        <p className="text-app-ink-soft">Loading…</p>
-      ) : selectedEntries.length === 0 ? (
-        <div className="flex flex-col items-start gap-3 rounded-2xl border border-dashed border-app-border p-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <BarChart3 className="size-5 shrink-0 text-app-link" aria-hidden="true" />
-            <p className="text-app-ink-soft">Log some resource usage first — trends build up as entries come in.</p>
-          </div>
-          <Link
-            to="/resources"
-            className="shrink-0 rounded text-sm font-semibold text-app-link underline-offset-4 hover:text-app-heading hover:underline"
-          >
-            Go to Resource Tracking
-          </Link>
-        </div>
-      ) : (
-        <>
-          <div className="rounded-2xl border border-app-border/70 bg-app-surface/80 p-6 shadow-card">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <div>
-                <p className="text-sm font-semibold tracking-[0.08em] text-app-ink-soft uppercase">
-                  Carbon impact over time
-                </p>
-                <p className="mt-1 font-display text-2xl font-medium text-app-heading">{formatCo2e(totalCo2eKg)}</p>
-                <p className="text-sm text-app-ink-soft">total estimated across {carbonTrend.length} month(s)</p>
-              </div>
-            </div>
-            {carbonTrend.some((point) => point.value > 0) ? (
-              <TrendChart points={carbonTrend} tone={theme} unit="kg CO₂e" className="mt-4" />
-            ) : (
-              <p className="mt-4 flex items-center gap-1.5 text-sm text-app-ink-soft">
-                <Info className="size-3.5 shrink-0" aria-hidden="true" />
-                No fuel, energy, fertilizer or pesticide entries yet — see the Carbon Calculator for details.
-              </p>
-            )}
-          </div>
-
-          {resourceTrends.length > 0 && (
-            <div>
-              <h2 className="mb-3 text-sm font-semibold tracking-[0.08em] text-app-ink-soft uppercase">
-                Resource usage trends
-              </h2>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {resourceTrends.map((trend) => {
-                  const Icon = RESOURCE_TYPE_ICONS[trend.type]
-                  return (
-                    <div key={trend.type} className="rounded-2xl border border-app-border/70 bg-app-surface/70 p-4">
-                      <div className="flex items-center gap-2.5">
-                        <span className="grid size-9 place-items-center rounded-lg border border-app-border bg-app-chip text-app-link">
-                          <Icon className="size-4.5" aria-hidden="true" />
-                        </span>
-                        <div>
-                          <p className="text-sm font-semibold text-app-ink-soft">{trend.label}</p>
-                          <p className="font-display text-lg font-medium text-app-heading">
-                            {trend.total} {trend.unit} total
-                          </p>
-                        </div>
-                      </div>
-                      <Sparkline points={trend.points} tone={theme} unit={trend.unit} className="mt-3" />
-                      {trend.excludedCount > 0 && (
-                        <p className="mt-1.5 flex items-center gap-1 text-xs text-app-ink-soft">
-                          <Info className="size-3 shrink-0" aria-hidden="true" />
-                          {trend.excludedCount} {trend.excludedCount === 1 ? 'entry' : 'entries'} in a different unit,
-                          not shown
-                        </p>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  )
+  const totalCo2eKg = carbonTrend.reduce((sum, point) => sum + (point.value ?? 0), 0)
+  return <div className="app-page analytics-page">
+    <PageHeader eyebrow="MEASURE & UNDERSTAND" title="Farm analytics" description="Review recorded resource consumption and estimated environmental impact." action={<PageAction to="/resources">Log resource usage</PageAction>} />
+    <section aria-label="Resource analytics filters" className="resource-filters"><FarmFilter farms={directory.farms} tone={theme} value={farm} onChange={setFarm} loading={directory.loading}/><TextField label="From date" tone={theme} type="date" value={from} max={to || undefined} onChange={event => setFrom(event.target.value)} /><TextField label="To date" tone={theme} type="date" value={to} min={from || undefined} onChange={event => setTo(event.target.value)} /><Select label="Resource category" tone={theme} value={category} onChange={event => setCategory(event.target.value)}><option value="">All resources</option>{RESOURCE_TYPES.map(type => <option key={type} value={type}>{RESOURCE_TYPE_LABELS[type]}</option>)}</Select></section>
+    <p className="report-scope">Resource metrics and charts use the selected dates within the latest 200 loaded records. Land and crop distribution show current directory areas within the farm scope.</p>
+    <div className="metrics-grid"><MetricCard icon={Sprout} label="Estimated emissions" value={loading ? '...' : error ? 'Unavailable' : formatCo2e(totalCo2eKg)} detail="Illustrative estimate from selected records" accent /><MetricCard icon={BarChart3} label="Tracked resources" value={loading ? '...' : error ? 'Unavailable' : new Set(selectedEntries.map(entry => entry.resourceType)).size} detail="Categories in selected records" /><MetricCard icon={Droplets} label="Resource records" value={loading ? '...' : error ? 'Unavailable' : selectedEntries.length} detail="Selected from the latest 200 records" /></div>
+    <LandUse farmId={farm} farms={directory.farms} crops={directory.crops} loading={directory.loading} error={directory.error} />
+    {directory.error && <Alert tone="error" surface={theme}>{directory.error}</Alert>}
+    {error ? <Alert tone="error" surface={theme}>{error}</Alert> : loading ? <p role="status">Loading resource history...</p> : <>
+      {!selectedEntries.length && <div className="history-no-results"><p>{entries.length ? 'No records match these filters.' : 'No resource records yet.'}</p>{entries.length ? <button type="button" onClick={() => { setFrom(''); setTo(''); setCategory(''); setFarm('') }}>Clear filters</button> : <Link to="/resources#resource-entry">Record resource usage</Link>}</div>}
+      <ResourceHistorySection entries={selectedEntries} category={category} totalLoaded={entries.length} />
+      <section className="analytics-carbon-history"><header><h2>Carbon impact over time</h2><strong>{formatCo2e(totalCo2eKg)}</strong><p>Monthly estimates using the same factors as the carbon calculator. Missing months are gaps.</p></header>{carbonTrend.some(point => (point.value ?? 0) > 0) ? <TrendChart points={carbonTrend} unit="kg CO2e" label="Monthly estimated emissions" /> : <p>No supported inputs available for an emissions estimate. <Link to="/carbon">Review calculation details</Link></p>}</section>
+    </>}
+  </div>
 }

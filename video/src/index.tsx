@@ -1,4 +1,7 @@
+import { AuthStoryFilm } from './AuthStory';
 import React from 'react';
+import { HeroLoop } from './HeroLoop';
+import { ProductTour } from './ProductTour';
 import { AbsoluteFill, Composition, Img, OffthreadVideo, Sequence, interpolate, registerRoot, staticFile, useCurrentFrame, useVideoConfig } from 'remotion';
 
 type FilmProps = { durationSeconds: number; useFootage: boolean };
@@ -30,9 +33,9 @@ function Film({ useFootage }: FilmProps) {
   return <AbsoluteFill style={{ background: '#091e15', color: '#faf7ee', fontFamily: 'Arial, sans-serif' }}>{scenes.map((_, index) => <Sequence key={index} from={index * frames} durationInFrames={index === 2 ? durationInFrames - index * frames : frames}><Scene index={index} frames={frames} useFootage={useFootage} /></Sequence>)}</AbsoluteFill>;
 }
 function Root() {
-  return <Composition id="AgriPulse" component={Film} width={1920} height={1080} fps={30} durationInFrames={540} defaultProps={{ durationSeconds: 18, useFootage: false }} calculateMetadata={({ props }) => {
+  return <><Composition id="AgriPulseAuthStory" component={AuthStoryFilm} width={960} height={540} fps={30} durationInFrames={600} defaultProps={{titles:false}}/><Composition id="AgriPulseProductTour" component={ProductTour} width={960} height={540} fps={30} durationInFrames={600} /><Composition id="AgriPulseHero" component={HeroLoop} width={960} height={540} fps={30} durationInFrames={360} /><Composition id="AgriPulse" component={Film} width={1920} height={1080} fps={30} durationInFrames={540} defaultProps={{ durationSeconds: 18, useFootage: true }} calculateMetadata={({ props }) => {
     if (!Number.isFinite(props.durationSeconds) || props.durationSeconds < 6 || props.durationSeconds > 30) throw new Error('Choose a duration between 6 and 30 seconds.');
     return { durationInFrames: Math.round(props.durationSeconds * 30) };
-  }} />;
+  }} /></>;
 }
 registerRoot(Root);

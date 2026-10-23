@@ -144,6 +144,42 @@ integration('Farm API with MongoDB and real authentication', () => {
     expect((await request(app).delete('/crops/' + cropId).auth(ownerToken, { type: 'bearer' })).status).toBe(204);
     expect((await request(app).get('/crops/' + cropId).auth(ownerToken, { type: 'bearer' })).status).toBe(404);
   });
+  it('validates resource parents, preserves legacy clients and prevents dangling references', async () => {
+    const farm = await request(app).post('/farms').auth(ownerToken,{type:'bearer'}).send(input);
+    const otherFarm = await request(app).post('/farms').auth(ownerToken,{type:'bearer'}).send({...input,farmName:'Second owned farm'});
+    const foreignFarm = await request(app).post('/farms').auth(otherToken,{type:'bearer'}).send(input);
+    for(const f of [farm,otherFarm,foreignFarm]) { expect(f.status).toBe(201); createdFarmIds.push(f.body.id); }
+    const cropInput={name:'Linked rice',category:'Rice & paddy',farmId:farm.body.id,areaHectares:1,plantingDate:'2026-10-01',harvestDate:'2027-02-01',stage:'Growing'};
+    const crop=await request(app).post('/crops').auth(ownerToken,{type:'bearer'}).send(cropInput);
+    expect(crop.status).toBe(201);createdCropIds.push(crop.body.id);
+    const resourceInput={resourceType:'WATER',quantity:40,unit:'L',date:'2026-10-03'};
+    const create=(fields:object,token=ownerToken)=>request(app).post('/resources').auth(token,{type:'bearer'}).send({...resourceInput,...fields});
+    expect((await create({farmId:'invalid'})).status).toBe(400);
+    expect((await create({farmId:foreignFarm.body.id})).status).toBe(404);
+    expect((await create({farmId:farm.body.id},otherToken)).status).toBe(404);
+    expect((await create({cropId:crop.body.id})).status).toBe(400);
+    expect((await create({farmId:otherFarm.body.id,cropId:crop.body.id})).status).toBe(404);
+    expect((await create({farmId:farm.body.id,cropId:new mongoose.Types.ObjectId().toString()})).status).toBe(404);
+    const linked=await create({farmId:farm.body.id,cropId:crop.body.id});
+    expect(linked.status).toBe(201);createdResourceIds.push(linked.body.id);
+    expect(linked.body).toMatchObject({farmId:farm.body.id,cropId:crop.body.id});
+    expect((await request(app).put('/resources/'+linked.body.id).auth(otherToken,{type:'bearer'}).send(resourceInput)).status).toBe(404);
+    const legacyUpdate=await request(app).put('/resources/'+linked.body.id).auth(ownerToken,{type:'bearer'}).send({...resourceInput,quantity:45});
+    expect(legacyUpdate.body).toMatchObject({farmId:farm.body.id,cropId:crop.body.id,quantity:45});
+    expect((await request(app).put('/crops/'+crop.body.id).auth(ownerToken,{type:'bearer'}).send({...cropInput,farmId:otherFarm.body.id})).status).toBe(409);
+    expect((await request(app).delete('/crops/'+crop.body.id).auth(ownerToken,{type:'bearer'})).status).toBe(409);
+    expect((await request(app).delete('/farms/'+farm.body.id).auth(ownerToken,{type:'bearer'})).status).toBe(409);
+    const cleared=await request(app).put('/resources/'+linked.body.id).auth(ownerToken,{type:'bearer'}).send({...resourceInput,farmId:null,cropId:null});
+    expect(cleared.status).toBe(200);expect(cleared.body).toMatchObject({farmId:null,cropId:null});
+    expect((await request(app).delete('/crops/'+crop.body.id).auth(ownerToken,{type:'bearer'})).status).toBe(204);
+    const farmOnly=await create({farmId:otherFarm.body.id});expect(farmOnly.status).toBe(201);createdResourceIds.push(farmOnly.body.id);
+    expect((await request(app).delete('/farms/'+otherFarm.body.id).auth(ownerToken,{type:'bearer'})).status).toBe(409);
+    // A document created before the additive schema remains readable and unassigned.
+    const oldId=new mongoose.Types.ObjectId();createdResourceIds.push(String(oldId));
+    await mongoose.connection.collection('resourceentries').insertOne({_id:oldId,userId:new mongoose.Types.ObjectId(ownerId),...resourceInput,date:new Date(resourceInput.date),createdAt:new Date(),updatedAt:new Date()});
+    const list=await request(app).get('/resources').auth(ownerToken,{type:'bearer'});
+    expect(list.body.find((row:{id:string})=>row.id===String(oldId))).toMatchObject({farmId:null,cropId:null});
+  });
   it('preserves resource tracking and ownership while deleting a farm', async () => {
     const resource = await request(app).post('/resources').auth(ownerToken, { type: 'bearer' }).send({ resourceType: 'FUEL', quantity: 10, unit: 'L', date: '2026-10-01' });
     expect(resource.status).toBe(201);
@@ -156,7 +192,7 @@ integration('Farm API with MongoDB and real authentication', () => {
     expect((await request(app).get('/resources/summary').auth(ownerToken, { type: 'bearer' })).body.FUEL).toBe(10);
     expect((await request(app).delete(`/farms/${farmId}`).auth(ownerToken, { type: 'bearer' })).status).toBe(204);
     expect((await request(app).get(`/farms/${farmId}`).auth(ownerToken, { type: 'bearer' })).status).toBe(404);
-    expect((await request(app).get('/resources').auth(ownerToken, { type: 'bearer' })).body).toHaveLength(1);
+    expect((await request(app).get('/resources').auth(ownerToken, { type: 'bearer' })).body.some((row:{id:string}) => row.id === resource.body.id)).toBe(true);
     expect((await request(app).get('/resources').auth(otherToken, { type: 'bearer' })).body).toEqual([]);
     expect((await request(app).get('/users/me').auth(ownerToken, { type: 'bearer' })).body.farmName).toBe('Default Farm');
   });

@@ -1,7 +1,8 @@
 import axios, { AxiosError } from 'axios'
 import { tokenStorage } from './tokenStorage'
 
-const baseURL = import.meta.env.VITE_API_URL
+// Vite forwards development requests to the API, including on alternate preview ports.
+const baseURL = import.meta.env.DEV ? '/api' : import.meta.env.VITE_API_URL
 
 if (!baseURL && import.meta.env.DEV) {
   console.warn('VITE_API_URL is not set. Copy .env.example to .env and restart the dev server.')

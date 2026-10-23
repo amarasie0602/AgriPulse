@@ -330,7 +330,7 @@
 .auth-skip:focus { top: 16px; }
 .auth-story { display: flex; flex-direction: column; padding: 36px clamp(28px, 5vw, 90px); color: #253d2c; }
 .auth-story-content { max-width: 470px; margin-block: auto; padding-block: 48px; }
-.auth-story h1 { margin: 24px 0; font-family: var(--font-display); font-size: clamp(38px, 4.2vw, 66px); font-weight: 500; letter-spacing: -2px; line-height: 1.08; }
+.auth-story h1 { margin: 24px 0; font-family: var(--font-display); font-size: clamp(34px, 3.3vw, 46px); font-weight: 500; letter-spacing: -1.4px; line-height: 1.15; }
 .auth-story h1 em { color: #5f7a50; }
 .auth-story .eyebrow { color: #4d6d43; }
 .auth-introduction { font-size: 14px; line-height: 1.85; color: #64715f; }

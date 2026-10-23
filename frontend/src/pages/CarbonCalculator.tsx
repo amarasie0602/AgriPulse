@@ -1,10 +1,17 @@
-import { PageHeader, PageAction, MetricCard } from '@/components/ui/Workspace'
+import { useState } from 'react'
+import { FarmFilter } from '@/components/ui/FarmFilter'
+import { TextField } from '@/components/ui/TextField'
+import { useFarmDirectory } from '@/hooks/useFarmDirectory'
+import { scopeResourceEntries } from '@/utils/reportScope'
+import { TrendChart } from '@/components/ui/TrendChart'
+import { monthlyCarbonTrend } from '@/utils/analytics'
+import { PageHeader, PageAction } from '@/components/ui/Workspace'
 import { Bug, Droplets, Fuel, Info, Package, Sprout, Zap, type LucideIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Alert } from '@/components/ui/Alert'
 import { useDocumentTitle, useResourceEntries, useTheme } from '@/hooks'
 import type { ResourceType } from '@/types'
-import { estimateCarbon, formatCo2e } from '@/utils/carbon'
+import { EMISSION_FACTORS, FACTOR_VERSION, estimateCarbon, formatCo2e } from '@/utils/carbon'
 
 const RESOURCE_TYPE_ICONS: Record<ResourceType, LucideIcon> = {
   WATER: Droplets,
@@ -20,28 +27,35 @@ export default function CarbonCalculator() {
   const { theme } = useTheme()
   const { entries, loading, error } = useResourceEntries()
 
-  const estimate = estimateCarbon(entries)
+  const directory = useFarmDirectory()
+  const [farm,setFarm] = useState(''), [from,setFrom] = useState(''), [to,setTo] = useState('')
+  const selectedEntries = scopeResourceEntries(entries,farm,from,to)
+  const estimate = estimateCarbon(selectedEntries)
+  const history = monthlyCarbonTrend(selectedEntries)
+  let cumulative = 0
+  const colors = ['#234e37','#729653','#b0c38a','#c9ad76']
+  const segments = estimate.rows.filter(row => row.co2eKg > 0).map((row,index) => {const start=cumulative;cumulative+=row.co2eKg/estimate.totalCo2eKg*100;return `${colors[index%colors.length]} ${start}% ${cumulative}%`})
   const countedRows = estimate.rows.filter((row) => row.matchedQuantity > 0)
 
   return (
     <div className="app-page carboncalculator-page animate-slide-up space-y-8">
       <PageHeader eyebrow="ENVIRONMENTAL IMPACT" title={`Carbon calculator`} description="Understand where your emissions come from and what contributes most." action={<PageAction to="/resources">Manage resource log</PageAction>} />
 
+      <section className="report-controls" aria-label="Carbon reporting filters"><FarmFilter farms={directory.farms} tone={theme} value={farm} onChange={setFarm} loading={directory.loading}/><TextField label="From date" tone={theme} type="date" value={from} max={to||undefined} onChange={e=>setFrom(e.target.value)}/><TextField label="To date" tone={theme} type="date" value={to} min={from||undefined} onChange={e=>setTo(e.target.value)}/></section>
+      {directory.error && <Alert tone="error" surface={theme}>{directory.error}</Alert>}
       {error && (
         <Alert tone="error" surface={theme}>
           {error}
         </Alert>
       )}
 
-      <div className="metrics-grid"><MetricCard icon={Sprout} label="Estimated footprint" value={loading ? '...' : formatCo2e(estimate.totalCo2eKg)} detail="Illustrative estimate across all logged entries" accent /><MetricCard icon={Fuel} label="Emission sources" value={loading ? '...' : countedRows.length} detail="Categories contributing to your footprint" /><MetricCard icon={Package} label="Resource records" value={loading ? '...' : entries.length} detail="Linked automatically from your resource log" /></div>
+      <section className="carbon-report-summary" aria-label="Carbon estimate summary"><div className="carbon-report-total"><span className="eyebrow">ESTIMATED EMISSIONS</span><strong>{loading ? '...' : error ? 'Unavailable' : formatCo2e(estimate.totalCo2eKg)}</strong><p>From up to 200 recent resource records. An illustrative estimate, not a certified footprint.</p><Link to="/resources">Review source records <Info size={15} aria-hidden="true" /></Link></div><div className="carbon-report-context">{estimate.hasData && !error && <div className="emissions-donut" role="img" aria-label={`Total estimated emissions: ${formatCo2e(estimate.totalCo2eKg)}`} style={{background:`conic-gradient(${segments.join(',')})`}}><div><strong>{formatCo2e(estimate.totalCo2eKg)}</strong><span>Estimated</span></div></div>}<div><span>Contributing sources</span><strong>{loading ? '...' : error ? 'Unavailable' : countedRows.length}</strong></div><div><span>Resource records reviewed</span><strong>{loading ? '...' : error ? 'Unavailable' : selectedEntries.length}</strong></div><p>Record inputs in their matching units. AgriPulse applies the existing factor for each supported source.</p></div></section>
       <Alert tone="info" surface={theme}>
-        These figures use standard, illustrative emission factors — a helpful guide, not a certified
-        calculation. Water and other/uncategorized usage aren't counted toward the total below.
-      </Alert>
+        These figures use unverified project defaults, retained for comparison with existing estimates. They are illustrative, not a certified footprint. Water and uncategorized inputs are excluded. </Alert>
 
       {loading ? (
         <p className="text-app-ink-soft">Loading…</p>
-      ) : entries.length === 0 ? (
+      ) : selectedEntries.length === 0 ? (
         <div className="flex flex-col items-start gap-3 rounded-2xl border border-dashed border-app-border p-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-app-ink-soft">Log some resource usage first — fuel, energy or fertilizer entries feed this estimate.</p>
           <Link
@@ -103,6 +117,8 @@ export default function CarbonCalculator() {
           )}
         </>
       )}
+      <section className="factor-methodology"><h2>Calculation assumptions</h2><p>Quantity × factor = estimated kg CO2e. Factor set: {FACTOR_VERSION}. No regional, supplier, lifecycle-boundary or source-year verification is available for these legacy defaults. Do not use this report for compliance or carbon-credit claims.</p><div className="resource-table-scroll"><table className="resource-record-table"><caption>Legacy factor register — all sources unverified</caption><thead><tr><th>Source assumption</th><th>Factor</th><th>Limitations</th></tr></thead><tbody>{EMISSION_FACTORS.map(factor=><tr key={factor.type}><td>{factor.label}</td><td>{factor.kgCo2ePerUnit} kg CO2e/{factor.unit}</td><td>{factor.assumption}</td></tr>)}</tbody></table></div><p>Fuel is assumed to be diesel; generic fertilizer records are assumed to represent nitrogen fertilizer. Product composition and application emissions are not recorded. Unsupported units are excluded without conversion. Missing months remain gaps.</p></section>
+      {!loading && !error && history.length > 0 && <section className="analytics-carbon-history"><h2>Emissions over time</h2><p className="nature-chart-note">Monthly totals from recorded inputs. Missing months are gaps, not zero emissions.</p><TrendChart points={history} unit="kg CO2e" label="Historical estimated carbon emissions" /></section>}
     </div>
   )
 }

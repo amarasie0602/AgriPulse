@@ -7,6 +7,8 @@ export type ResourceType = (typeof RESOURCE_TYPES)[number];
 const resourceEntrySchema = new Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    farmId: { type: Schema.Types.ObjectId, ref: 'Farm', default: null },
+    cropId: { type: Schema.Types.ObjectId, ref: 'Crop', default: null },
     resourceType: { type: String, enum: RESOURCE_TYPES, required: true },
     quantity: { type: Number, required: true, min: 0 },
     unit: { type: String, required: true, trim: true, maxlength: 20 },
@@ -18,6 +20,8 @@ const resourceEntrySchema = new Schema(
 
 // Recent-first listing is the only query pattern today.
 resourceEntrySchema.index({ userId: 1, date: -1 });
+resourceEntrySchema.index({ userId: 1, farmId: 1, date: -1 });
+resourceEntrySchema.index({ userId: 1, cropId: 1 });
 
 export type ResourceEntryDoc = HydratedDocument<InferSchemaType<typeof resourceEntrySchema>>;
 

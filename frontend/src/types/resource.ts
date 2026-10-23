@@ -22,6 +22,8 @@ export const RESOURCE_TYPE_DEFAULT_UNIT: Record<ResourceType, string> = {
 
 export interface ResourceEntry {
   id: string
+  farmId?: string | null
+  cropId?: string | null
   resourceType: ResourceType
   quantity: number
   unit: string
@@ -32,6 +34,8 @@ export interface ResourceEntry {
 }
 
 export interface CreateResourceEntryInput {
+  farmId?: string | null
+  cropId?: string | null
   resourceType: ResourceType
   quantity: number
   unit: string

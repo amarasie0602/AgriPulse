@@ -1,7 +1,10 @@
-@import 'tailwindcss';
+﻿@import 'tailwindcss';
 @import './workspace.css';
 @import './reference.css';
 @import './crops.css';
+@import './reference-integration.css';
+@import './agripulse-workspace.css';
+@import './premium.css';
 
 /*
  * AgriPulse design tokens.
@@ -40,7 +43,7 @@
   --color-danger-text: #8a3418;
 
   /*
-   * App surface tokens — used only by the signed-in dashboard (DashboardShell,
+   * App surface tokens â€” used only by the signed-in dashboard (DashboardShell,
    * Dashboard, FarmProfile, ResourceTracking), never by the always-dark
    * Login/Register console. Light values below; dark values are defined in
    * the `[data-theme="dark"]` override further down this file. Reusing the
@@ -133,7 +136,7 @@
 
   body {
     margin: 0;
-    /* Matches whichever screen is on top — the console sets its own full-bleed
+    /* Matches whichever screen is on top â€” the console sets its own full-bleed
        background regardless, this just avoids a mismatched flash at scroll bounds. */
     background-color: var(--color-app-bg);
     color: var(--color-app-ink);

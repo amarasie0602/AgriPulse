@@ -1,3 +1,7 @@
+> Current revision: [operational workspace and authentication story](TRANSFORMATION.md). Dashboard-video details below are historical.
+
+> Current UI: see [the ZIP-matched reference design](REFERENCE_UI.md). This document records the earlier functional implementation.
+
 # Premium workspace implementation
 
 The existing app uses React/Vite/TypeScript and Tailwind v4, a shared Axios service,

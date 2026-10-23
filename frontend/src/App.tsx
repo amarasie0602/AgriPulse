@@ -9,6 +9,8 @@ import FarmProfile from '@/pages/FarmProfile'
 import Login from '@/pages/Login'
 import Register from '@/pages/Register'
 import ResourceTracking from '@/pages/ResourceTracking'
+import Notifications from '@/pages/Notifications'
+import Settings from '@/pages/Settings'
 import { ProtectedRoute, PublicOnlyRoute } from '@/routes'
 
 export default function App() {
@@ -28,6 +30,8 @@ export default function App() {
           <Route path="/farms" element={<FarmManagement />} />
           <Route path="/crops" element={<CropManagement />} />
           <Route path="/profile" element={<FarmProfile />} />
+          <Route path="/notifications" element={<Notifications />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
       </Route>
 

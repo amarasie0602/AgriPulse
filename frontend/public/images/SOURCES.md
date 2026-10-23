@@ -9,3 +9,6 @@ Used only as scenic brand imagery. Farm directory rows use neutral icons.
 
 The older `tea-landscape.png` remains in the repository to preserve the existing
 asset, but is generated artwork and is no longer used in the active workspace.
+
+
+The current photographic workspace uses the distinct local assets in [photography/SOURCES.md](photography/SOURCES.md). This supersedes the earlier rice-only visual treatment described above. The older generated tea image remains unused.

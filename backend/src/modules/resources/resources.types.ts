@@ -2,6 +2,8 @@ import type { ResourceType } from './resource-entry.model';
 
 export interface ResourceEntryDto {
   id: string;
+  farmId: string | null;
+  cropId: string | null;
   resourceType: ResourceType;
   quantity: number;
   unit: string;

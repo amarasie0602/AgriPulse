@@ -1,5 +1,7 @@
 import { Types } from 'mongoose';
-import { ForbiddenError, NotFoundError } from '../../common/errors/http-error';
+import { ForbiddenError, HttpError, NotFoundError } from '../../common/errors/http-error';
+import { FarmModel } from '../farms/farm.model';
+import { CropModel } from '../crops/crop.model';
 import { ResourceEntryModel, type ResourceEntryDoc, type ResourceType } from './resource-entry.model';
 import type { CreateResourceEntryInput } from './resources.validation';
 import type { ResourceEntryDto, ResourceSummary } from './resources.types';
@@ -10,6 +12,8 @@ const LIST_LIMIT = 200;
 function toDto(entry: ResourceEntryDoc): ResourceEntryDto {
   return {
     id: String(entry._id),
+    farmId: entry.farmId ? String(entry.farmId) : null,
+    cropId: entry.cropId ? String(entry.cropId) : null,
     resourceType: entry.resourceType as ResourceType,
     quantity: entry.quantity,
     unit: entry.unit,
@@ -19,16 +23,28 @@ function toDto(entry: ResourceEntryDoc): ResourceEntryDto {
   };
 }
 
+async function validateParents(userId: string, farmId: string | null, cropId: string | null) {
+  if (cropId && !farmId) throw new HttpError(400, 'Select a farm before assigning a crop.');
+  if (farmId && !await FarmModel.exists({ _id: farmId, userId })) throw new NotFoundError('Select a farm from your own directory.');
+  if (cropId && !await CropModel.exists({ _id: cropId, farmId, userId })) throw new NotFoundError('Select a crop belonging to this farm and your account.');
+}
+
 export const resourcesService = {
   async update(userId: string, entryId: string, input: CreateResourceEntryInput): Promise<ResourceEntryDto> {
     const entry = Types.ObjectId.isValid(entryId) ? await ResourceEntryModel.findOne({ _id: entryId, userId }) : null;
     if (!entry) throw new NotFoundError('This entry no longer exists.');
-    entry.set({ ...input, notes: input.notes ?? '', date: new Date(input.date) });
+    const farmId = input.farmId === undefined ? (entry.farmId ? String(entry.farmId) : null) : input.farmId;
+    const cropId = input.cropId === undefined ? (entry.cropId ? String(entry.cropId) : null) : input.cropId;
+    await validateParents(userId, farmId, cropId);
+    entry.set({ ...input, farmId, cropId, notes: input.notes ?? '', date: new Date(input.date) });
     return toDto(await entry.save());
   },
   async create(userId: string, input: CreateResourceEntryInput): Promise<ResourceEntryDto> {
+    await validateParents(userId, input.farmId ?? null, input.cropId ?? null);
     const entry = await ResourceEntryModel.create({
       userId,
+      farmId: input.farmId ?? null,
+      cropId: input.cropId ?? null,
       resourceType: input.resourceType,
       quantity: input.quantity,
       unit: input.unit,

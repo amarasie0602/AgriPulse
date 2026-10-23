@@ -1,5 +1,10 @@
-import { PageHeader, PageAction, WorkspaceNote } from '@/components/ui/Workspace'
-import { useState, type FormEvent } from 'react'
+import { FarmFilter } from '@/components/ui/FarmFilter'
+import { useFarmDirectory } from '@/hooks/useFarmDirectory'
+import { scopeResourceEntries } from '@/utils/reportScope'
+import { ResourceHistorySection } from '@/components/ui/ResourceHistorySection'
+import { PageHeader, PageAction } from '@/components/ui/Workspace'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useLocation } from 'react-router-dom'
 import { Bug, Calendar, Droplets, Fuel, Package, Plus, Pencil, Sprout, Trash2, Zap, type LucideIcon } from 'lucide-react'
 import { resourceService } from '@/services/resourceService'
 import { Alert } from '@/components/ui/Alert'
@@ -28,6 +33,8 @@ function todayIsoDate(): string {
 }
 
 interface FormState {
+  farmId: string
+  cropId: string
   resourceType: ResourceType
   quantity: string
   unit: string
@@ -36,14 +43,27 @@ interface FormState {
 }
 
 function emptyForm(): FormState {
-  return { resourceType: 'WATER', quantity: '', unit: RESOURCE_TYPE_DEFAULT_UNIT.WATER, date: todayIsoDate(), notes: '' }
+  return { farmId: '', cropId: '', resourceType: 'WATER', quantity: '', unit: RESOURCE_TYPE_DEFAULT_UNIT.WATER, date: todayIsoDate(), notes: '' }
 }
 
 export default function ResourceTracking() {
+  const { hash } = useLocation()
+  const entryForm = useRef<HTMLFormElement>(null)
+  useEffect(() => {
+    if (hash !== '#resource-entry') return
+    const frame = requestAnimationFrame(() => {
+      entryForm.current?.scrollIntoView({ block: 'start' })
+      entryForm.current?.querySelector('select')?.focus({ preventScroll: true })
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [hash])
   useDocumentTitle('Resource Tracking')
   const { theme } = useTheme()
   const { entries, loading, error, addEntry, removeEntry, refresh } = useResourceEntries()
 
+  const directory = useFarmDirectory()
+  const [farmFilter, setFarmFilter] = useState('')
+  const [cropFilter, setCropFilter] = useState('')
   const [editing, setEditing] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
@@ -87,6 +107,8 @@ export default function ResourceTracking() {
     setFormError(null)
     try {
       const input = {
+        farmId: form.farmId || null,
+        cropId: form.cropId || null,
         resourceType: form.resourceType,
         quantity,
         unit: form.unit.trim(),
@@ -116,10 +138,11 @@ export default function ResourceTracking() {
     }
   }
 
-  const visibleEntries = entries.filter(entry => (!typeFilter || entry.resourceType === typeFilter) && (!fromDate || entry.date.slice(0,10) >= fromDate) && (!toDate || entry.date.slice(0,10) <= toDate) && (entry.notes + ' ' + RESOURCE_TYPE_LABELS[entry.resourceType] + ' ' + entry.unit).toLowerCase().includes(query.trim().toLowerCase())).sort((a,b) => order === 'oldest' ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date))
+  const scopedEntries = scopeResourceEntries(entries, farmFilter, fromDate, toDate, cropFilter)
+  const visibleEntries = scopedEntries.filter(entry => (!typeFilter || entry.resourceType === typeFilter) && ((entry.notes ?? '') + ' ' + RESOURCE_TYPE_LABELS[entry.resourceType] + ' ' + entry.unit).toLowerCase().includes(query.trim().toLowerCase())).sort((a,b) => order === 'oldest' ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date))
   const unitGroups = new Map<string, { type: ResourceType; unit: string; quantity: number }>()
-  for (const entry of entries) {
-    const key = entry.resourceType + ':' + entry.unit
+  for (const entry of visibleEntries) {
+    const key = entry.resourceType + ':' + entry.unit.trim().toLowerCase()
     const group = unitGroups.get(key) ?? { type: entry.resourceType, unit: entry.unit, quantity: 0 }
     group.quantity += entry.quantity; unitGroups.set(key, group)
   }
@@ -129,6 +152,8 @@ export default function ResourceTracking() {
     <div className="app-page resourcetracking-page animate-slide-up space-y-8">
       <PageHeader eyebrow="FARM OPERATIONS" title={`Resource tracking`} description="Keep every input in view. Record usage and follow your farm's activity." action={<PageAction to="/analytics">View analytics</PageAction>} />
 
+      {directory.error && <Alert tone="error" surface={theme}>{directory.error}</Alert>}
+      <section className="report-controls" aria-label="Resource reporting filters"><FarmFilter farms={directory.farms} loading={directory.loading} tone={theme} value={farmFilter} onChange={value => { setFarmFilter(value); setCropFilter('') }} /><Select label="Reporting crop" tone={theme} value={cropFilter} onChange={e => setCropFilter(e.target.value)}><option value="">All crop assignments</option>{directory.crops.filter(crop => !farmFilter || crop.farmId === farmFilter).map(crop => <option key={crop.id} value={crop.id}>{crop.name}</option>)}</Select></section>
       {saved && <Alert tone="success" surface={theme}>{saved}</Alert>}
       {error && (
         <Alert tone="error" surface={theme}>
@@ -149,7 +174,7 @@ export default function ResourceTracking() {
                   <p className="text-sm font-semibold text-app-ink-soft">{RESOURCE_TYPE_LABELS[type]}</p>
                 </div>
                 <p className="mt-2 font-display text-2xl font-medium text-app-heading">
-                  {new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(quantity)} {unit} <span className="text-base font-sans font-medium text-app-ink-soft">in recent records</span>
+                  {new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(quantity)} {unit} <span className="text-base font-sans font-medium text-app-ink-soft">in selected records</span>
                 </p>
               </div>
             )
@@ -157,12 +182,15 @@ export default function ResourceTracking() {
         </div>
       )}
 
-      <div className="resource-workspace"><WorkspaceNote title="Every input tells a story">Record water, energy, fuel, and crop inputs as you use them. Your log automatically powers analytics and carbon estimates.</WorkspaceNote><form
+      <div className="resource-workspace"><form id="resource-entry" ref={entryForm}
         onSubmit={handleSubmit}
         noValidate
         className="grid gap-4 rounded-2xl border border-app-border/70 bg-app-surface/80 p-6 shadow-card sm:grid-cols-2"
       >
         <div className="form-section-heading sm:col-span-2"><span className="eyebrow">{editing ? 'EDIT RECORD' : 'NEW ENTRY'}</span><h2>{editing ? 'Edit resource usage' : 'Record resource usage'}</h2><p>Enter the quantity and date for this resource.</p></div>
+        <Select label="Assigned farm" tone={theme} value={form.farmId} disabled={submitting || directory.loading} onChange={e => setForm(current => ({...current, farmId:e.target.value, cropId:''}))}><option value="">Unassigned</option>{directory.farms.map(farm => <option key={farm.id} value={farm.id}>{farm.farmName}</option>)}</Select>
+        <Select label="Assigned crop" tone={theme} value={form.cropId} disabled={submitting || !form.farmId || directory.loading} onChange={e => setForm(current => ({...current,cropId:e.target.value}))}><option value="">No crop assignment</option>{directory.crops.filter(crop => crop.farmId === form.farmId).map(crop => <option key={crop.id} value={crop.id}>{crop.name}</option>)}</Select>
+        <p className="report-scope sm:col-span-2">Assignments are optional. Existing records remain unassigned until you edit them.</p>
         <Select
           label="Resource Type"
           tone={theme}
@@ -242,7 +270,7 @@ export default function ResourceTracking() {
         </div>
       </form></div>
 
-      <div>
+      <div className="resource-records-panel">
         <h2 className="mb-3 text-sm font-semibold tracking-[0.08em] text-app-ink-soft uppercase">Recent entries</h2><p className="text-sm text-app-ink-soft mb-4">Latest 200 records. Summaries keep different units separate.</p>
 
         <div className="resource-filters"><TextField tone={theme} label="Search records" value={query} onChange={event => setQuery(event.target.value)} type="search" /><Select tone={theme} label="Resource category" value={typeFilter} onChange={event => setTypeFilter(event.target.value)}><option value="">All resources</option>{RESOURCE_TYPES.map(type => <option key={type} value={type}>{RESOURCE_TYPE_LABELS[type]}</option>)}</Select><TextField tone={theme} label="From date" type="date" value={fromDate} onChange={event => setFromDate(event.target.value)} /><TextField tone={theme} label="To date" type="date" min={fromDate} value={toDate} onChange={event => setToDate(event.target.value)} /><Select tone={theme} label="Record order" value={order} onChange={event => setOrder(event.target.value)}><option value="newest">Newest first</option><option value="oldest">Oldest first</option></Select></div>
@@ -254,43 +282,10 @@ export default function ResourceTracking() {
             No entries yet — add your first one above.
           </p>
         ) : (
-          <ul className="flex flex-col gap-2">
-            {visibleEntries.map((entry) => {
-              const Icon = RESOURCE_TYPE_ICONS[entry.resourceType]
-              return (
-                <li
-                  key={entry.id}
-                  className="flex items-center gap-3 rounded-xl border border-app-border/70 bg-app-surface/60 p-3.5"
-                >
-                  <span className="grid size-9 shrink-0 place-items-center rounded-lg border border-app-border bg-app-chip text-app-link">
-                    <Icon className="size-4.5" aria-hidden="true" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-app-ink">
-                      {entry.quantity} {entry.unit}{' '}
-                      <span className="font-normal text-app-ink-soft">· {RESOURCE_TYPE_LABELS[entry.resourceType]}</span>
-                    </p>
-                    <p className="truncate text-sm text-app-ink-soft">
-                      {new Date(entry.date).toLocaleDateString(undefined, { dateStyle: 'medium' })}
-                      {entry.notes ? ` · ${entry.notes}` : ''}
-                    </p>
-                  </div>
-                  <button type="button" className="icon-action" aria-label="Edit entry" onClick={() => { setEditing(entry.id); setForm({ resourceType: entry.resourceType, quantity: String(entry.quantity), unit: entry.unit, date: entry.date.slice(0,10), notes: entry.notes ?? '' }); setFormError(null); setSaved(''); document.querySelector('form')?.scrollIntoView({ block: 'start', behavior: 'instant' }) }}><Pencil size={18} /></button>
-                  <button
-                    type="button"
-                    onClick={() => handleRemove(entry.id)}
-                    disabled={removingId === entry.id}
-                    aria-label="Delete entry"
-                    className="grid size-9 shrink-0 place-items-center rounded-lg text-app-ink-soft transition-colors hover:bg-app-danger-bg hover:text-app-danger-text disabled:opacity-50"
-                  >
-                    <Trash2 className="size-4.5" aria-hidden="true" />
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
+          <div className="resource-table-scroll"><table className="resource-record-table"><caption className="sr-only">Saved resource usage records</caption><thead><tr><th scope="col">Date</th><th scope="col">Resource</th><th scope="col">Quantity</th><th scope="col">Farm / crop</th><th scope="col">Notes</th><th scope="col">Actions</th></tr></thead><tbody>{visibleEntries.map(entry => <tr key={entry.id}><td>{new Date(entry.date).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'})}</td><td>{RESOURCE_TYPE_LABELS[entry.resourceType]}</td><td>{entry.quantity.toLocaleString()} {entry.unit}</td><td>{entry.farmId ? directory.farms.find(farm => farm.id === entry.farmId)?.farmName || 'Farm unavailable' : 'Unassigned'}{entry.cropId && <small className="record-crop">{directory.crops.find(crop => crop.id === entry.cropId)?.name || 'Crop unavailable'}</small>}</td><td>{entry.notes || '—'}</td><td><div className="row-actions"><button type="button" className="icon-action" aria-label="Edit entry" onClick={() => {setEditing(entry.id);setForm({farmId:entry.farmId??'',cropId:entry.cropId??'',resourceType:entry.resourceType,quantity:String(entry.quantity),unit:entry.unit,date:entry.date.slice(0,10),notes:entry.notes??''});setFormError(null);setSaved('');entryForm.current?.scrollIntoView({block:'start'})}}><Pencil size={17} /></button><button type="button" className="icon-action danger-action" aria-label="Delete entry" disabled={removingId===entry.id} onClick={() => void handleRemove(entry.id)}><Trash2 size={17} /></button></div></td></tr>)}</tbody></table></div>
         )}
       </div>
+      {!loading && !error && <details className="resource-history-disclosure"><summary>Resource usage trends</summary><ResourceHistorySection entries={visibleEntries} category={typeFilter} totalLoaded={entries.length} /></details>}
     </div>
   )
 }
