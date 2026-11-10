@@ -71,7 +71,7 @@ export function LoginForm() {
 
       {isMockAuthEnabled && (
         <DemoModeNotice
-          surface="dark"
+          surface="light"
           onUseDemo={() => {
             setValue('email', DEMO_CREDENTIALS.email)
             setValue('password', DEMO_CREDENTIALS.password)
@@ -79,12 +79,12 @@ export function LoginForm() {
         />
       )}
       {state.registered && (
-        <Alert tone="success" surface="dark" className="mb-5">
+        <Alert tone="success" surface="light" className="mb-5">
           Account created. Sign in to continue.
         </Alert>
       )}
       {state.reason === 'expired' && (
-        <Alert tone="info" surface="dark" className="mb-5">
+        <Alert tone="info" surface="light" className="mb-5">
           Your session has expired. Please sign in again.
         </Alert>
       )}
@@ -93,7 +93,7 @@ export function LoginForm() {
         <TextField
           {...getFieldProps('email')}
           label="Email"
-          tone="dark"
+          tone="light"
           type="email"
           inputMode="email"
           autoComplete="email"
@@ -104,7 +104,7 @@ export function LoginForm() {
 
         <PasswordInput
           {...getFieldProps('password')}
-          tone="dark"
+          tone="light"
           autoComplete="current-password"
           placeholder="Enter your password"
           disabled={submitting}
@@ -113,7 +113,7 @@ export function LoginForm() {
         <div className="flex items-center justify-between gap-4">
           <Checkbox
             label="Remember me"
-            tone="dark"
+            tone="light"
             checked={remember}
             onChange={(event) => setRemember(event.target.checked)}
             disabled={submitting}
@@ -129,13 +129,13 @@ export function LoginForm() {
         </div>
 
         {showResetNotice && (
-          <Alert tone="info" surface="dark">
+          <Alert tone="info" surface="light">
             Password reset isn't available yet. Please contact your AgriPulse administrator for help.
           </Alert>
         )}
 
         {submitError && (
-          <Alert tone="error" surface="dark">
+          <Alert tone="error" surface="light">
             {submitError}
           </Alert>
         )}
@@ -153,12 +153,12 @@ export function LoginForm() {
       </form>
 
       <div className="my-3.5">
-        <Divider label="OR" tone="dark" />
+        <Divider label="OR" tone="light" />
       </div>
 
       <GoogleSignInButton
         intent="signin"
-        tone="dark"
+        tone="light"
         disabled={submitting}
         onSuccess={goToDestination}
         onError={(message) => setSubmitError(message)}

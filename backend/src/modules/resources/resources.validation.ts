@@ -3,6 +3,8 @@ import { RESOURCE_TYPES } from './resource-entry.model';
 
 export const createResourceEntrySchema = z
   .object({
+    farmId: z.string().regex(/^[a-f\d]{24}$/i, 'Enter a valid farm identifier.').nullable().optional(),
+    cropId: z.string().regex(/^[a-f\d]{24}$/i, 'Enter a valid crop identifier.').nullable().optional(),
     resourceType: z.enum(RESOURCE_TYPES, { message: 'Choose a valid resource type.' }),
     quantity: z.number().positive('Quantity must be greater than 0.').max(1_000_000),
     unit: z.string().trim().min(1, 'Unit is required.').max(20, 'Unit must be 20 characters or fewer.'),

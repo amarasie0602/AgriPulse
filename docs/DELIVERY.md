@@ -1,3 +1,7 @@
+> Current revision: [operational workspace and authentication story](TRANSFORMATION.md). Dashboard-video details below are historical.
+
+> Current UI: see [the ZIP-matched reference design](REFERENCE_UI.md). This document records the earlier functional implementation.
+
 # AgriPulse delivery — 20 October 2026
 
 ## Scope and preservation
@@ -129,6 +133,8 @@ Web assets are included in `frontend/public/media/`.
   transactional; concurrent farm deletion/crop creation needs additional handling
   before a high-concurrency deployment.
 - Media uses one genuine agricultural source clip with distinct excerpts. It does
-  not claim multi-location or Sri Lankan documentary coverage. Full-motion looping
-  hero video is intentionally unnecessary for the operational dashboard; users
-  choose when to view the brand film.
+  not claim multi-location or Sri Lankan documentary coverage. The dashboard now
+  uses a dedicated 12-second Remotion background with a real poster, motion control,
+  reduced-motion/data-saving alternatives, and error fallback. The separate brand
+  film is retained as a render artifact; its promotional dashboard section has been
+  removed. See video/README.md for the hero render commands.

@@ -5,6 +5,7 @@ import { HttpError, NotFoundError } from '../../common/errors/http-error';
 import { FarmModel } from '../farms/farm.model';
 import { CropModel } from './crop.model';
 import { cropSchema, type CropInput } from './crops.validation';
+import { ResourceEntryModel } from '../resources/resource-entry.model';
 
 export const cropsRouter = Router();
 cropsRouter.use(requireAuth);
@@ -38,10 +39,12 @@ cropsRouter.put<{ id: string }>('/:id', validateBody(cropSchema), async (req, re
   const crop = await CropModel.findOne({ _id: id(req.params.id), userId: req.auth!.sub });
   if (!crop) throw new NotFoundError('Crop not found.');
   await checkFarm(req.auth!.sub, req.body);
+  if (String(crop.farmId) !== req.body.farmId && await ResourceEntryModel.exists({ cropId: crop._id, userId: req.auth!.sub })) throw new HttpError(409, 'Reassign this crop’s resource records before moving it to another farm.');
   crop.set(req.body);
   res.json(dto(await crop.save()));
 });
 cropsRouter.delete<{ id: string }>('/:id', async (req, res) => {
+  if (await ResourceEntryModel.exists({ cropId: id(req.params.id), userId: req.auth!.sub })) throw new HttpError(409, 'Reassign or delete this crop’s resource records before deleting the crop.');
   const crop = await CropModel.findOneAndDelete({ _id: id(req.params.id), userId: req.auth!.sub });
   if (!crop) throw new NotFoundError('Crop not found.');
   res.status(204).end();

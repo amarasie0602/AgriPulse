@@ -99,13 +99,13 @@ export function RegisterForm() {
         <p className="mt-1 text-[0.9rem] text-moss-200/85">Start understanding your farm's sustainability</p>
       </div>
 
-      {isMockAuthEnabled && <DemoModeNotice surface="dark" />}
+      {isMockAuthEnabled && <DemoModeNotice surface="light" />}
 
       <form ref={formRef} onSubmit={handleSubmit} noValidate className="space-y-3">
         <TextField
           {...getFieldProps('name')}
           label="Full Name"
-          tone="dark"
+          tone="light"
           autoComplete="name"
           placeholder="Jane Perera"
           leftIcon={User}
@@ -115,7 +115,7 @@ export function RegisterForm() {
         <TextField
           {...getFieldProps('email')}
           label="Email"
-          tone="dark"
+          tone="light"
           type="email"
           inputMode="email"
           autoComplete="email"
@@ -126,7 +126,7 @@ export function RegisterForm() {
 
         <PasswordInput
           {...getFieldProps('password')}
-          tone="dark"
+          tone="light"
           autoComplete="new-password"
           placeholder="At least 8 characters"
           disabled={locked}
@@ -136,7 +136,7 @@ export function RegisterForm() {
         <PasswordInput
           {...getFieldProps('confirmPassword')}
           label="Confirm Password"
-          tone="dark"
+          tone="light"
           autoComplete="new-password"
           placeholder="Re-enter your password"
           disabled={locked}
@@ -145,7 +145,7 @@ export function RegisterForm() {
         <TextField
           {...getFieldProps('farmName')}
           label="Farm Name"
-          tone="dark"
+          tone="light"
           optional
           autoComplete="organization"
           placeholder="Green Valley Farm"
@@ -154,7 +154,7 @@ export function RegisterForm() {
         />
 
         {submitError && (
-          <Alert tone="error" surface="dark">
+          <Alert tone="error" surface="light">
             {submitError}
           </Alert>
         )}
@@ -182,12 +182,12 @@ export function RegisterForm() {
       </form>
 
       <div className="my-4">
-        <Divider label="OR" tone="dark" />
+        <Divider label="OR" tone="light" />
       </div>
 
       <GoogleSignInButton
         intent="signup"
-        tone="dark"
+        tone="light"
         disabled={locked}
         onSuccess={handleGoogleSuccess}
         onError={(message) => setSubmitError(message)}

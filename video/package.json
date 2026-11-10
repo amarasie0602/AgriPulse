@@ -7,7 +7,12 @@
     "studio": "remotion studio src/index.tsx",
     "compositions": "remotion compositions src/index.tsx",
     "render": "remotion render src/index.tsx AgriPulse out/agripulse.mp4 --codec=h264 --crf=23 --pixel-format=yuv420p",
-    "still": "remotion still src/index.tsx AgriPulse out/poster.jpg --frame=100"
+    "still": "remotion still src/index.tsx AgriPulse out/poster.jpg --frame=100",
+    "render:hero": "remotion render src/index.tsx AgriPulseHero out/agripulse-hero.mp4 --codec=h264 --crf=29 --pixel-format=yuv420p",
+    "still:hero": "remotion still src/index.tsx AgriPulseHero out/agripulse-hero-poster.jpg --frame=45",
+    "render:tour": "remotion render src/index.tsx AgriPulseProductTour out/agripulse-product-tour.mp4 --codec=h264 --crf=29 --pixel-format=yuv420p",
+    "still:tour": "remotion still src/index.tsx AgriPulseProductTour out/agripulse-product-tour-poster.jpg --frame=45",
+    "render:auth": "remotion render src/index.tsx AgriPulseAuthStory ../frontend/public/media/agripulse-auth-story.mp4 --codec=h264 --crf=29 --pixel-format=yuv420p"
   },
   "dependencies": {
     "@remotion/cli": "4.0.537",

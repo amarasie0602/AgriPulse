@@ -1,3 +1,5 @@
+import { Photo } from '@/components/ui/Photo'
+import { farmPhoto } from '@/utils/media'
 import { PageHeader, PageAction } from '@/components/ui/Workspace'
 import { useEffect, useState, type FormEvent } from 'react'
 import { MapPin, Ruler, Sprout } from 'lucide-react'
@@ -91,7 +93,8 @@ export default function FarmProfile() {
         </Alert>
       )}
 
-      <div className="profile-workspace"><aside className="farm-identity"><div className="farm-monogram"><Sprout size={36} aria-hidden="true" /></div><span className="eyebrow">FARM IDENTITY</span><h2>{form.farmName || 'Your farm'}</h2><p><MapPin size={15} aria-hidden="true" />{form.location || 'Location not added'}</p><div className="farm-facts"><div><span>Farm area</span><strong>{form.farmSizeHectares || '...'} <small>ha</small></strong></div><div><span>Crop varieties</span><strong>{form.cropTypes.length}</strong></div></div><div className="farm-crops">{form.cropTypes.map(crop => <span key={crop}>{crop}</span>)}</div><p className="farm-identity-note">Keep your farm details current for a more useful view of your operations.</p></aside><form onSubmit={handleSubmit} noValidate className="space-y-5 rounded-2xl border border-app-border/70 bg-app-surface/80 p-6 shadow-card">
+      <section className="profile-cover" aria-label="Farm profile identity"><Photo asset={farmPhoto(String(profile?.id || form.farmName || 'profile'))} className="profile-landscape" /><div className="profile-identity"><div className="profile-avatar">{(form.farmName || 'F').charAt(0).toUpperCase()}</div><div><h2>{form.farmName || 'Your farm'}</h2><p><MapPin size={14} aria-hidden="true" />{form.location || 'Location not added'}</p></div></div></section>
+      <div className="profile-workspace"><aside className="farm-identity"><div className="farm-monogram"><Sprout size={36} aria-hidden="true" /></div><span className="eyebrow">FARM IDENTITY</span><h2>{form.farmName || 'Your farm'}</h2><p><MapPin size={15} aria-hidden="true" />{form.location || 'Location not added'}</p><div className="farm-facts"><div><span>Farm area</span><strong>{form.farmSizeHectares || '...'} <small>ha</small></strong></div><div><span>Crop varieties</span><strong>{form.cropTypes.length}</strong></div></div><div className="farm-crops">{form.cropTypes.map(crop => <span key={crop}>{crop}</span>)}</div></aside><form onSubmit={handleSubmit} noValidate className="space-y-5 rounded-2xl border border-app-border/70 bg-app-surface/80 p-6 shadow-card">
         <div className="form-section-heading sm:col-span-2"><span className="eyebrow">PROFILE CONFIGURATION</span><h2>Farm details</h2><p>Manage your location, land area, and crop varieties.</p></div>
         <TextField
           label="Farm Name"

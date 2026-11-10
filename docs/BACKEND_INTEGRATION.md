@@ -241,3 +241,7 @@ and continued profile/resource behavior.
 From `frontend/`, run `npm.cmd run build`. Docker still uses the existing environment
 files, MongoDB service, and persistent volume. Rebuild the frontend and backend with
 `docker compose up --build -d` to serve source changes in the existing stack.
+
+## Optional resource attribution
+
+Resource POST/PUT bodies now accept `farmId` and `cropId` as optional nullable ObjectId strings. A crop requires its own farm, and both must belong to the authenticated user. Omitted fields on PUT preserve existing references; explicit null clears them. Legacy documents are returned with null assignments. Farm/crop deletion and crop relocation return 409 when resource references would become inconsistent. See [TRANSFORMATION.md](TRANSFORMATION.md) for compatibility and test details. Existing endpoint paths and authentication are unchanged.

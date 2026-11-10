@@ -15,7 +15,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variants: Record<Variant, string> = {
   primary:
-    'bg-forest-900 text-bone-50 shadow-[0_1px_0_rgb(255_255_255/0.12)_inset,0_10px_24px_-10px_rgb(12_42_32/0.7)] ' +
+    'bg-forest-900 text-bone-50 ' +
     'hover:bg-forest-800 active:bg-forest-950 disabled:bg-forest-900/60',
   secondary:
     'border border-bone-300 bg-bone-50/70 text-ink hover:border-forest-600/40 hover:bg-white ' +
@@ -23,7 +23,7 @@ const variants: Record<Variant, string> = {
   ghost: 'text-forest-700 hover:bg-forest-900/5',
   // Warm gold CTA for dark surfaces (e.g. the login console) — matches the platform's gold accent.
   gold:
-    'bg-linear-to-b from-wheat-300 to-wheat-500 text-forest-950 shadow-[0_1px_0_rgb(255_255_255/0.4)_inset,0_10px_28px_-10px_rgb(201_154_75/0.65)] ' +
+    'bg-moss-300 text-forest-950 ' +
     'hover:brightness-105 active:brightness-95 disabled:opacity-60',
   // Secondary action on a dark surface.
   'outline-dark':
@@ -49,7 +49,7 @@ export function Button({
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       className={cn(
-        'inline-flex h-12 items-center justify-center gap-2.5 rounded-xl px-5 text-[0.95rem] font-semibold',
+        'inline-flex h-11 items-center justify-center gap-2 rounded-md px-4 text-sm font-semibold',
         'transition-[background-color,border-color,box-shadow,transform] duration-200',
         'active:scale-[0.99] disabled:cursor-not-allowed disabled:active:scale-100',
         variants[variant],

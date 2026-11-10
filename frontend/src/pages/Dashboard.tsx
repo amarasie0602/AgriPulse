@@ -1,120 +1,40 @@
-import { useEffect, useState, type ReactNode } from 'react'
-import { ArrowDown, ArrowUp, BarChart3, Calculator, ChevronRight, Clock3, Droplet, Droplets, Leaf, MapPin, Plus, Ruler, Sprout, Warehouse, Wheat, Zap, type LucideIcon } from 'lucide-react'
-import { Link } from 'react-router-dom'
+﻿import { Link } from 'react-router-dom'
+import { BarChart3, Droplets, Leaf, Sprout, Warehouse, Ruler, ChevronRight } from 'lucide-react'
 import { Alert } from '@/components/ui/Alert'
-import { BrandFilm } from '@/components/ui/BrandFilm'
-import { LeafSprig } from '@/components/ui/LeafSprig'
+import { MetricCard } from '@/components/ui/Workspace'
+import { FieldOverview } from '@/components/ui/FieldOverview'
 import { ResourceUsageChart } from '@/components/ui/ResourceUsageChart'
+import { FarmFilter } from '@/components/ui/FarmFilter'
+import { TextField } from '@/components/ui/TextField'
+import { Photo } from '@/components/ui/Photo'
+import { cropPhoto } from '@/utils/media'
 import { useAuth, useDocumentTitle, useResourceEntries, useTheme } from '@/hooks'
+import { useFarmDirectory } from '@/hooks/useFarmDirectory'
+import { scopeResourceEntries } from '@/utils/reportScope'
+import { monthlyResourceTrends } from '@/utils/analytics'
+import { estimateCarbon, formatCo2e } from '@/utils/carbon'
 import { RESOURCE_TYPE_LABELS } from '@/types'
-import type { Farm } from '@/types/farm'
-import { farmService } from '@/services/farmService'
-import { cropService } from '@/services/cropService'
-import type { Crop } from '@/types/crop'
-import { monthlyCarbonTrend, monthlyResourceTrends } from '@/utils/analytics'
-import { estimateCarbon } from '@/utils/carbon'
-
-const number = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 })
-const carbonColors = ['#194e30', '#639e4d', '#99bd75', '#d5e3b7']
-
-function DashboardStat({ icon: Icon, label, value, detail, to, tone }: { icon: LucideIcon; label: string; value: ReactNode; detail: string; to: string; tone: string }) {
-  return <Link className={`nature-stat nature-stat-${tone}`} to={to}><span className="nature-stat-icon"><Icon size={30} strokeWidth={1.6} aria-hidden="true" /></span><div><span className="nature-stat-label">{label}</span><strong>{value}</strong><p>{detail}</p></div><span className="nature-stat-arrow"><ChevronRight size={15} aria-hidden="true" /></span></Link>
-}
-function CardHeading({ icon: Icon, title, description, children }: { icon: LucideIcon; title: string; description: string; children?: ReactNode }) {
-  return <div className="nature-card-heading"><Icon className="nature-heading-icon" size={25} strokeWidth={1.8} aria-hidden="true" /><div><h2>{title}</h2><p>{description}</p></div>{children}</div>
-}
-
+import { useState } from 'react'
+const number=new Intl.NumberFormat(undefined,{maximumFractionDigits:2})
 export default function Dashboard() {
   useDocumentTitle('Dashboard')
-  const { user } = useAuth()
-  const { theme } = useTheme()
-  const { entries, loading: resourcesLoading, error: resourceError } = useResourceEntries()
-  const [farms, setFarms] = useState<Farm[]>([])
-  const [farmsError, setFarmsError] = useState<string | null>(null)
-  const [farmsLoading, setFarmsLoading] = useState(true)
-  const [crops, setCrops] = useState<Crop[]>([])
-  const [cropError, setCropError] = useState('')
-  const [cropsLoading, setCropsLoading] = useState(true)
-  useEffect(() => {
-    const controller = new AbortController()
-    cropService.list(controller.signal).then(records => { if (!controller.signal.aborted) setCrops(records) })
-      .catch(error => { if (!controller.signal.aborted) setCropError(error instanceof Error ? error.message : 'Crop records unavailable.') })
-      .finally(() => { if (!controller.signal.aborted) setCropsLoading(false) })
-    return () => controller.abort()
-  }, [])
-  const [months, setMonths] = useState(6)
-  useEffect(() => {
-    const controller = new AbortController()
-    farmService.list(controller.signal).then(records => {
-      if (!controller.signal.aborted) setFarms(records)
-    }).catch(error => { if (!controller.signal.aborted) setFarmsError(error instanceof Error ? error.message : 'Could not load your farms.') })
-      .finally(() => { if (!controller.signal.aborted) setFarmsLoading(false) })
-    return () => controller.abort()
-  }, [])
-
-  const firstName = user?.name?.trim().split(' ')[0] || 'Farmer'
-  const totalArea = farms.reduce((sum, farm) => sum + farm.farmSizeHectares, 0)
-  const cropCount = crops.filter(crop => crop.stage !== 'Harvested').length
-  const carbon = estimateCarbon(entries)
-  const carbonRows = carbon.rows.filter(row => row.co2eKg > 0)
-  const resourceTrends = monthlyResourceTrends(entries)
-  const preferredTypes = ['WATER', 'FERTILIZER', 'ENERGY']
-  const displayedTrends = [...resourceTrends].sort((a, b) => {
-    const rank = (type: string) => preferredTypes.includes(type) ? preferredTypes.indexOf(type) : 3
-    return rank(a.type) - rank(b.type)
-  }).slice(0, 3)
-  const carbonTrend = monthlyCarbonTrend(entries)
-  const last = carbonTrend[carbonTrend.length - 1]?.value ?? 0
-  const previous = carbonTrend[carbonTrend.length - 2]?.value ?? 0
-  const change = last > 0 && previous > 0 ? (last - previous) / previous * 100 : null
-  let progress = 0
-  const segments = carbonRows.map((row, index) => {
-    const start = progress
-    progress += row.co2eKg / carbon.totalCo2eKg * 100
-    return `${carbonColors[index % carbonColors.length]} ${start}% ${progress}%`
-  })
-  const farmValue = (value: ReactNode) => farmsLoading ? '...' : farmsError ? '—' : value
-  const carbonValue = resourcesLoading ? '...' : resourceError || !carbon.hasData ? '—' : <>{number.format(carbon.totalCo2eKg / 1000)} <small>tCO₂e</small></>
-
-  return <div className="app-page reference-dashboard">
-    <header className="nature-welcome"><div><p>Welcome back,</p><h1>{firstName} <Sprout size={33} strokeWidth={1.7} aria-hidden="true" /></h1><span>Here’s what’s happening on your farms today.</span></div><div className="welcome-landscape"><LeafSprig className="welcome-leaves" /><blockquote>“Sustainable farming<br />today for a healthier<br />tomorrow.”</blockquote></div></header>
-    {(resourceError || farmsError || cropError) && <Alert tone="error" surface={theme}>{resourceError || farmsError || cropError}</Alert>}
-    <section className="harvest-strip" aria-label="Harvest priorities"><div><span className="eyebrow">FIELD PRIORITIES</span><h2>The season ahead</h2></div>{cropsLoading ? <p role="status">Loading crop plans / </p> : cropError ? <p>Crop plans unavailable.</p> : crops.filter(crop => crop.stage !== 'Harvested').slice(0, 3).map(crop => <Link key={crop.id} to="/crops"><strong>{crop.name}</strong><span>{crop.stage}  /  Expected {new Date(crop.harvestDate + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span></Link>)}{!cropsLoading && !cropError && !cropCount && <Link to="/crops">Plan your first crop and its harvest window <ChevronRight size={15} /></Link>}</section>
-    <div className="nature-stats">
-      <DashboardStat icon={Sprout} label="Total Farms" value={farmValue(farms.length)} detail="Your registered farm records" to="/farms" tone="sage" />
-      <DashboardStat icon={Ruler} label="Total Area" value={farmValue(<>{number.format(totalArea)} <small>ha</small></>)} detail="Across your registered farms" to="/farms" tone="olive" />
-      <DashboardStat icon={Wheat} label="Active Crops" value={cropsLoading ? '...' : cropError ? ' / ' : cropCount} detail="Observed crop records in the field" to="/crops" tone="amber" />
-      <DashboardStat icon={Leaf} label="Estimated Carbon" value={carbonValue} detail="From your saved resource log" to="/carbon" tone="moss" />
-    </div>
-    <div className="nature-middle-grid">
-      <section className="nature-card resource-trend-card">
-        <CardHeading icon={BarChart3} title="Resource Usage Trends" description="Water, crop inputs, and energy usage over time.">
-          <label className="trend-period"><span className="sr-only">Resource trend period</span><select value={months} onChange={event => setMonths(Number(event.target.value))}><option value={3}>Last 3 months</option><option value={6}>Last 6 months</option><option value={12}>Last 12 months</option></select></label>
-        </CardHeading>
-        {resourcesLoading ? <div className="nature-empty" role="status">Loading your resource trends...</div> : resourceError ? <div className="nature-empty">Resource trends are temporarily unavailable.</div> : displayedTrends.length ? <ResourceUsageChart trends={displayedTrends} months={months} /> : <div className="nature-empty"><BarChart3 size={32} aria-hidden="true" /><h3>Your resource story starts here</h3><p>Record water, energy, or crop inputs to see your usage over time.</p><Link to="/resources">Record resource usage <ChevronRight size={15} /></Link></div>}
-        <p className="nature-chart-note">Each line uses its labelled unit. Based on up to 200 recent entries; quantities are not combined.</p>
-      </section>
-      <section className="nature-card carbon-footprint-card">
-        <CardHeading icon={Leaf} title="Carbon Footprint" description="Your estimated carbon footprint and breakdown." />
-        <div className="carbon-visual"><div className="carbon-ring" style={{ background: segments.length && !resourceError ? `conic-gradient(${segments.join(', ')})` : 'var(--color-app-border)' }} role="img" aria-label={carbon.hasData && !resourceError ? `Estimated emissions: ${number.format(carbon.totalCo2eKg)} kg CO2e` : 'No carbon estimate available'}><div><strong>{resourcesLoading ? '...' : carbon.hasData && !resourceError ? number.format(carbon.totalCo2eKg / 1000) : '—'}</strong><span>tCO₂e</span></div></div>
-          <div className="carbon-details">{change !== null && !resourceError ? <p className={`carbon-comparison ${change > 0 ? 'carbon-increase' : ''}`}><span>{change <= 0 ? <ArrowDown size={17} /> : <ArrowUp size={17} />}{Math.abs(change).toFixed(0)}%</span>{change <= 0 ? 'Lower' : 'Higher'} than last month</p> : <p className="carbon-scope">{resourcesLoading ? 'Loading resource data...' : resourceError ? 'Estimate unavailable' : carbon.hasData ? 'Based on your resource records' : 'Log fuel, energy, or crop inputs to see your estimate.'}</p>}
-            <ul className="carbon-breakdown">{carbonRows.map((row, index) => <li key={row.type}><i style={{ background: carbonColors[index] }} /><span>{row.label}</span><strong>{(row.co2eKg / carbon.totalCo2eKg * 100).toFixed(0)}%</strong></li>)}</ul>
-          </div>
-        </div>
-        <Link className="carbon-methodology" to="/carbon">Illustrative estimate · View calculation details <ChevronRight size={14} aria-hidden="true" /></Link><LeafSprig className="carbon-leaves" />
-      </section>
-    </div>
-    <div className="nature-bottom-grid">
-      <section className="nature-card your-farms-card">
-        <CardHeading icon={Warehouse} title="Your Farms" description="Manage and monitor all your farm locations."><Link to="/farms">View all</Link></CardHeading>
-        {farmsLoading ? <div className="nature-empty" role="status">Loading farms...</div> : farmsError ? <div className="nature-empty">Your farms could not be loaded.<Link to="/farms">Open farm directory</Link></div> : farms.length ? <ul className="dashboard-farm-list">{farms.slice(0, 3).map((farm) => <li key={farm.id}><Link to={`/farms?q=${encodeURIComponent(farm.farmName)}`}><span className="farm-symbol"><Warehouse size={23} aria-hidden="true" /></span><div className="dashboard-farm-info"><h3>{farm.farmName}</h3><p><MapPin size={13} aria-hidden="true" />{farm.location}</p></div><strong>{number.format(farm.farmSizeHectares)} <small>ha</small></strong><div className="farm-crops">{farm.cropTypes.slice(0, 2).map(crop => <span key={crop}>{crop}</span>)}</div><ChevronRight size={16} className="farm-list-arrow" aria-hidden="true" /></Link></li>)}</ul> : <div className="nature-empty"><Sprout size={30} aria-hidden="true" /><h3>Room to grow</h3><p>Add your first farm and keep your land and crops in view.</p><Link to="/farms?new=1">Add your first farm <Plus size={15} /></Link></div>}
-      </section>
-      <section className="nature-card nature-activity-card">
-        <CardHeading icon={Clock3} title="Recent Activity" description="Latest updates from your resource log."><Link to="/resources">View all</Link></CardHeading>
-        {resourcesLoading ? <div className="nature-empty" role="status">Loading recent activity...</div> : resourceError ? <div className="nature-empty">Resource activity is unavailable.</div> : entries.length ? <ul className="nature-activity-list">{entries.slice(0, 4).map(entry => { const Icon = entry.resourceType === 'WATER' ? Droplets : entry.resourceType === 'ENERGY' ? Zap : entry.resourceType === 'FERTILIZER' ? Sprout : Leaf; return <li key={entry.id}><Link to="/resources"><span className={`activity-resource-icon activity-resource-${entry.resourceType.toLowerCase()}`}><Icon size={22} strokeWidth={1.6} aria-hidden="true" /></span><div><h3>{RESOURCE_TYPE_LABELS[entry.resourceType]} recorded</h3><p>{number.format(entry.quantity)} {entry.unit} · {new Date(entry.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</p></div><ChevronRight size={15} aria-hidden="true" /></Link></li> })}</ul> : <div className="nature-empty"><Clock3 size={29} aria-hidden="true" /><p>Your latest resource records will appear here.</p><Link to="/resources">Log your first entry</Link></div>}
-      </section>
-      <section className="nature-card quick-actions-card"><CardHeading icon={Zap} title="Quick Actions" description="Common tasks to manage your farms." /><div className="nature-quick-actions"><Link to="/crops"><Sprout size={21} aria-hidden="true" /><span>Manage Crops</span><ChevronRight size={16} aria-hidden="true" /></Link><Link to="/farms?new=1" className="quick-primary"><Plus size={21} aria-hidden="true" /><span>Add New Farm</span><ChevronRight size={16} aria-hidden="true" /></Link><Link to="/resources"><Droplet size={21} aria-hidden="true" /><span>Record Resource Usage</span><ChevronRight size={16} aria-hidden="true" /></Link><Link to="/carbon"><Calculator size={21} aria-hidden="true" /><span>Calculate Carbon Footprint</span><ChevronRight size={16} aria-hidden="true" /></Link><Link to="/analytics"><BarChart3 size={21} aria-hidden="true" /><span>View Analytics</span><ChevronRight size={16} aria-hidden="true" /></Link></div></section>
-    </div>
-    <BrandFilm />
+  const {user}=useAuth(),{theme}=useTheme(),directory=useFarmDirectory()
+  const {entries,loading,error}=useResourceEntries()
+  const [farm,setFarm]=useState(''),[from,setFrom]=useState(''),[to,setTo]=useState(''),[months,setMonths]=useState(6)
+  const resources=scopeResourceEntries(entries,farm,from,to)
+  const farms=directory.farms.filter(item=>!farm||item.id===farm)
+  const crops=directory.crops.filter(item=>(!farm||item.farmId===farm)&&item.stage!=='Harvested')
+  const carbon=estimateCarbon(resources),trends=monthlyResourceTrends(resources)
+  const amount=(type:string,unit:string)=>{const matched=resources.filter(e=>e.resourceType===type&&e.unit.trim().toLowerCase()===unit.toLowerCase());return matched.length?<>{number.format(matched.reduce((s,e)=>s+e.quantity,0))} <small>{unit}</small></>:'—'}
+  return <div className="app-page operational-dashboard">
+    <FieldOverview name={user?.name.trim().split(' ')[0]||'Farmer'} />
+    <section className="report-controls" aria-label="Dashboard reporting filters"><FarmFilter farms={directory.farms} loading={directory.loading} tone={theme} value={farm} onChange={setFarm}/><TextField tone={theme} label="From date" type="date" value={from} max={to||undefined} onChange={e=>setFrom(e.target.value)}/><TextField tone={theme} label="To date" type="date" value={to} min={from||undefined} onChange={e=>setTo(e.target.value)}/></section>
+    <p className="report-scope">{farm==='unassigned'?'Unassigned resource records; no farm or crop area is attributed.':farm?farms[0]?.farmName||'Selected farm':'All farms and unassigned records'} · {from||'Earliest loaded record'} to {to||'latest loaded record'}. Resource reports use the latest 200 loaded records. Farm area and crop counts are current directory values.</p>
+    {(error||directory.error)&&<Alert tone="error" surface={theme}>{error||directory.error}</Alert>}
+    <div className="metrics-grid dashboard-metrics"><MetricCard icon={Warehouse} label="Farms" value={directory.loading?'...':directory.error?'Unavailable':farms.length} detail="In the selected farm scope"/><MetricCard icon={Ruler} label="Registered land" value={directory.loading?'...':directory.error?'Unavailable':<>{number.format(farms.reduce((s,f)=>s+f.farmSizeHectares,0))} <small>ha</small></>} detail="Farm area, not a cultivated-area estimate"/><MetricCard icon={Sprout} label="Active crop records" value={directory.loading?'...':directory.error?'Unavailable':crops.length} detail="Stages recorded as not yet harvested"/><MetricCard icon={Droplets} label="Recorded water" value={loading?'...':error?'Unavailable':amount('WATER','L')} detail="Selected dates; litre records only"/><MetricCard icon={BarChart3} label="Recorded electricity" value={loading?'...':error?'Unavailable':amount('ENERGY','kWh')} detail="Selected dates; kWh records only"/><MetricCard icon={Leaf} label="Estimated emissions" value={loading?'...':error?'Unavailable':carbon.hasData?formatCo2e(carbon.totalCo2eKg):'—'} detail="Selected inputs; illustrative factors"/></div>
+    <div className="nature-middle-grid"><section className="nature-card panel"><div className="panel-heading"><div><h2>Resource consumption</h2><p>Compare recorded periods in one resource and unit.</p></div><label className="trend-period"><span className="sr-only">Resource trend period</span><select value={months} onChange={e=>setMonths(Number(e.target.value))}><option value={3}>Last 3 months</option><option value={6}>Last 6 months</option><option value={12}>Last 12 months</option></select></label></div>{loading?<p role="status">Loading resource history...</p>:error?<p>Resource history unavailable.</p>:trends.length?<ResourceUsageChart trends={trends} months={months}/>:<div className="nature-empty"><h3>No resource records in this selection</h3><p>Change the filters or record usage with its date and unit.</p><Link to="/resources#resource-entry">Record usage →</Link></div>}</section>
+    <section className="nature-card panel impact-summary"><div className="panel-heading"><div><h2>Environmental impact</h2><p>Based on matching source units, not field measurements.</p></div><Link to="/carbon">Methodology</Link></div>{carbon.hasData&&!error?<><div className="impact-total"><strong>{formatCo2e(carbon.totalCo2eKg)}</strong><span>illustrative estimate</span></div><ul className="impact-sources">{carbon.rows.filter(r=>r.matchedQuantity>0).map(row=><li key={row.type}><div><span>{row.label}</span><strong>{number.format(row.co2eKg)} <small>kg CO2e</small></strong></div><progress value={row.co2eKg} max={carbon.totalCo2eKg} aria-label={row.label}/></li>)}</ul></>:<div className="nature-empty"><p>{loading?'Loading estimate...':error?'Estimate unavailable.':'No supported inputs available for an estimate.'}</p></div>}<p className="nature-chart-note">Water and uncategorized inputs are excluded. {carbon.totalUnmatchedEntries} entries have unsupported units. Review factor assumptions before using these figures.</p></section></div>
+    <section className="dashboard-season"><header className="section-heading"><h2>Active crops</h2><Link to="/crops">All crop plans →</Link></header>{directory.loading?<p role="status">Loading crops...</p>:crops.length?<div className="season-photo-grid">{[...crops].sort((a,b)=>a.harvestDate.localeCompare(b.harvestDate)).slice(0,4).map(crop=><article key={crop.id}><Photo asset={cropPhoto(crop)}/><div><h3><Link to={'/crops?crop='+crop.id}>{crop.name}</Link></h3><p>{crop.stage} · {directory.farms.find(f=>f.id===crop.farmId)?.farmName}</p><span>{number.format(crop.areaHectares)} ha · Planned harvest {crop.harvestDate}</span></div></article>)}</div>:<p className="season-empty">No active crops in this farm scope. Add a farm and its crop plans to begin.</p>}</section>
+    <div className="nature-bottom-grid"><section className="nature-card panel"><div className="panel-heading"><h2>Farm directory</h2><Link to="/farms">Manage farms</Link></div>{farms.length?<ul className="operational-farm-list">{farms.map(f=><li key={f.id}><Link to={'/farms?q='+encodeURIComponent(f.farmName)}><div><strong>{f.farmName}</strong><span>{f.location}</span></div><span>{number.format(f.farmSizeHectares)} ha</span><ChevronRight size={15}/></Link></li>)}</ul>:<p>No farms in this scope.</p>}</section><section className="nature-card panel"><div className="panel-heading"><h2>Recent resource records</h2><Link to="/resources">View log</Link></div>{loading?<p role="status">Loading records...</p>:resources.length?<ul className="operational-records">{resources.slice(0,5).map(e=><li key={e.id}><div><strong>{RESOURCE_TYPE_LABELS[e.resourceType]}</strong><span>{e.farmId?directory.farms.find(f=>f.id===e.farmId)?.farmName||'Farm unavailable':'Unassigned'} · {e.date.slice(0,10)}</span></div><strong>{number.format(e.quantity)} {e.unit}</strong></li>)}</ul>:<p>No resource records in this selection.</p>}</section></div>
   </div>
 }

@@ -9,7 +9,9 @@ import type { ResourceEntry, ResourceType } from '@/types'
  * — pumping energy — which is already counted under ENERGY; OTHER is too
  * vague to estimate), so they're excluded from the total rather than guessed at.
  */
+export const FACTOR_VERSION = 'agripulse-legacy-v1'
 export interface EmissionFactor {
+  assumption: string
   type: ResourceType
   /** The entry's `unit` must match this (case-insensitive) for the entry to count. */
   unit: string
@@ -18,10 +20,10 @@ export interface EmissionFactor {
 }
 
 export const EMISSION_FACTORS: EmissionFactor[] = [
-  { type: 'FUEL', unit: 'L', kgCo2ePerUnit: 2.68, label: 'Diesel fuel' },
-  { type: 'ENERGY', unit: 'kWh', kgCo2ePerUnit: 0.42, label: 'Grid electricity' },
-  { type: 'FERTILIZER', unit: 'kg', kgCo2ePerUnit: 5.5, label: 'Nitrogen fertilizer' },
-  { type: 'PESTICIDE', unit: 'L', kgCo2ePerUnit: 8, label: 'Pesticide' },
+  { type: 'FUEL', unit: 'L', kgCo2ePerUnit: 2.68, label: 'Diesel fuel', assumption: 'Assumes diesel, not verified by fuel subtype or lifecycle boundary.' },
+  { type: 'ENERGY', unit: 'kWh', kgCo2ePerUnit: 0.42, label: 'Grid electricity', assumption: 'Grid region, generation mix and source year are unspecified.' },
+  { type: 'FERTILIZER', unit: 'kg', kgCo2ePerUnit: 5.5, label: 'Nitrogen fertilizer', assumption: 'Assumes nitrogen fertilizer; composition and field N2O emissions are unspecified.' },
+  { type: 'PESTICIDE', unit: 'L', kgCo2ePerUnit: 8, label: 'Pesticide', assumption: 'Product density, active ingredient and production boundary are unspecified.' },
 ]
 
 export const CARBON_EXCLUDED_TYPES: ResourceType[] = ['WATER', 'OTHER']

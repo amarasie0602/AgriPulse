@@ -8,6 +8,10 @@ Smart Farm Sustainability & Resource Management Platform - built on the **MERN**
 | `backend/` | Express + MongoDB (Mongoose) API |
 | `docs/` | API contract shared by the frontend and backend |
 
+The current UI combines an operational farm dashboard with an interactive authentication film. See the [current implementation report](docs/TRANSFORMATION.md) for API changes, media, verification and limitations. The [collage report](docs/COLLAGE_IMPLEMENTATION.md) documents the earlier visual foundation.
+See the [delivery notes](docs/DELIVERY.md) for implemented features, verification,
+and known limitations, and [video instructions](video/README.md) for Remotion rendering.
+
 ## Run the full app with Docker Compose (Windows PowerShell)
 
 MongoDB, the API, and the frontend run locally as a Compose stack. MongoDB data is kept in the `mongo-data` Docker volume.
