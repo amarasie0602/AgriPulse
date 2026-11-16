@@ -1,6 +1,14 @@
 pipeline{
     agent { label 'rootless-docker'}
     
+    triggers {
+        pollSCM('H/5 * * * *')
+    }
+
+    options {
+        disableConcurrentBuilds()
+    }
+    
     stages{
         stage('Get AgriPulse from GitHub'){
             steps {
