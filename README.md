@@ -51,3 +51,6 @@ docker compose down
 The API's `backend/.env` uses `127.0.0.1:27017` for a locally reachable MongoDB. Set a private `JWT_SECRET` there. Start MongoDB locally (for example, with `docker run -d --name agripulse-mongo -p 27017:27017 -v agripulse-mongo-data:/data/db mongo:7`), then run `npm ci` and `npm run dev` from `backend/`. In a second terminal, run `npm ci` and `npm run dev` from `frontend/`; its `.env` should set `VITE_API_URL=http://localhost:3000`. The frontend dev server is at <http://localhost:5173>.
 
 See [`backend/README.md`](backend/README.md), [`frontend/README.md`](frontend/README.md), and [`docs/BACKEND_INTEGRATION.md`](docs/BACKEND_INTEGRATION.md) for additional details.
+
+
+Jenkins builds and deploys AgriPulse using Docker Compose.
