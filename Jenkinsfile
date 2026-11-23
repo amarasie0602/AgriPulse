@@ -42,5 +42,31 @@ pipeline {
                 '''
             }
         }
+
+        stage('Build Image') {
+            steps {
+                sh "docker build -t=YOUR_DOCKERHUB_USERNAME/agripulse-backend ./backend"
+                sh "docker build -t=YOUR_DOCKERHUB_USERNAME/agripulse-frontend ./frontend"
+            }
+        }
+
+        stage('Push Image') {
+            environment {
+                DOCKER_HUB = credentials('docker-hub-creds')
+            }
+            steps {
+                sh 'echo ${DOCKER_HUB_PSW} | docker login -u ${DOCKER_HUB_USR} --password-stdin'
+                sh "docker push YOUR_DOCKERHUB_USERNAME/agripulse-backend"
+                sh "docker push YOUR_DOCKERHUB_USERNAME/agripulse-frontend"
+            }
+        }
     }
-}
+
+    post {
+        always {
+            sh 'docker logout'
+        }
+    }
+                
+    }
+
