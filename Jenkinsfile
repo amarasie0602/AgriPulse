@@ -45,8 +45,8 @@ pipeline {
 
         stage('Build Image') {
             steps {
-                sh "docker build -t=YOUR_DOCKERHUB_USERNAME/agripulse-backend ./backend"
-                sh "docker build -t=YOUR_DOCKERHUB_USERNAME/agripulse-frontend ./frontend"
+                sh "docker build -t=ama62/agripulse-backend ./backend"
+                sh "docker build -t=ama62/agripulse-frontend ./frontend"
             }
         }
 
@@ -56,8 +56,8 @@ pipeline {
             }
             steps {
                 sh 'echo ${DOCKER_HUB_PSW} | docker login -u ${DOCKER_HUB_USR} --password-stdin'
-                sh "docker push YOUR_DOCKERHUB_USERNAME/agripulse-backend"
-                sh "docker push YOUR_DOCKERHUB_USERNAME/agripulse-frontend"
+                sh "docker push ama62/agripulse-backend"
+                sh "docker push ama62/agripulse-frontend"
             }
         }
     }
