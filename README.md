@@ -52,6 +52,6 @@ The API's `backend/.env` uses `127.0.0.1:27017` for a locally reachable MongoDB.
 
 See [`backend/README.md`](backend/README.md), [`frontend/README.md`](frontend/README.md), and [`docs/BACKEND_INTEGRATION.md`](docs/BACKEND_INTEGRATION.md) for additional details.
 
-
+CI test: auto build check
 
 
