@@ -55,4 +55,4 @@ See [`backend/README.md`](backend/README.md), [`frontend/README.md`](frontend/RE
 
 Jenkins builds and deploys AgriPulse using Docker Compose.
 Automatic Jenkins deployment check.
-Testing automatic deployment after build 17.
+
